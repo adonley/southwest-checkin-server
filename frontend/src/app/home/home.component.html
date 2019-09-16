@@ -1,11 +1,81 @@
-<div>
-  <h1>Southwest Auto Checkin</h1>
-  <form>
-    <input id="confirmation" name="confirmation" type="text">
-    <input id="first-name" name="firstName" type="text">
-    <input id="last-name" name="lastName" type="text">
-    <input id="email" type="email" name="email">
-    <input id="phone" name="phone" type="text">
-    <button type="submit" onClick="onSubmit()">Submit</button>
-  </form>
+<div class="container">
+  <h1><b>Southwest Auto Checkin</b></h1>
+
+  <br>
+
+  <div class="row">
+    <div class="col-12">
+      <h2><b>Check Reservation</b></h2>
+    </div>
+  </div>
+
+  <div class="row">
+    <form>
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text">Confirmation #</span>
+        </div>
+        <input class="form-control" placeholder="AXESSF" id="check-reservation" name="checkReservation" type="text">
+
+        <button type="submit" class="btn btn-primary">
+          Submit
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <br>
+
+  <div class="row">
+    <div class="col-12">
+      <h2><b>New Reservation</b></h2>
+    </div>
+  </div>
+  <div class="row">
+    <form>
+      <!-- Confirmation -->
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text">Confirmation #</span>
+        </div>
+        <input class="form-control" placeholder="AXESSF" id="confirmation" name="confirmation" type="text">
+      </div>
+
+      <!-- First name -->
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text">First Name</span>
+        </div>
+        <input class="form-control" placeholder="Johnny" id="first-name" name="confirmation" type="text">
+      </div>
+
+      <!-- Last name -->
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text">Last Name</span>
+        </div>
+        <input class="form-control" placeholder="Appleseed" id="last-name" name="confirmation" type="text">
+      </div>
+
+      <!-- Email -->
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text">Email (optional)</span>
+        </div>
+        <input class="form-control" placeholder="aafdasfds@gmail.com" id="email" name="confirmation" type="email">
+      </div>
+
+      <!-- Phone -->
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text">Phone (optional)</span>
+        </div>
+        <input class="form-control" placeholder="7024583345" id="phone" name="phone" type="text">
+      </div>
+
+      <button type="submit" class="btn btn-primary" onClick="onSubmit()">
+        Submit
+      </button>
+    </form>
+  </div>
 </div>
