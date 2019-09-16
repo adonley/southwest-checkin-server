@@ -22,27 +22,42 @@ def submit_confirmation():
     if not data.get('confirmation'):
         # TODO: check size
         errors.append('provide a confirmation')
+    # TODO: Validate futher?
     # TODO: validate against API?
     # Bail if we have errors
     if len(errors) > 0:
         return jsonify({"errors": errors}), 400
 
     # r.sadd()
-    # TODO: Validate
+    # TODO: put in key for date UTC?
+    # TODO: put in for confirmation
+    # TODO: key expiration?
+    r.set(data.get('confirmation', json.dumps(data)))
     return "", 201
 
 
-@app.route('/confirmation', methods=['GET'])
-def get_confirmations():
+@app.route('/confirmation/<code>', methods=['GET'])
+def get_confirmation(code: str):
     app.logger.info("Get request through docker")
-    # TODO: validate existence
-    return 200
+    confirmation = r.get(code)
+    # validate existence
+    if not confirmation:
+        return jsonify({"errors": ["confirmation not found"]}), 400
+    return jsonify(confirmation), 200
 
 
-@app.route('/confirmation', methods=['DELETE'])
-def delete_confirmation():
-    # TODO: validate existence
-    return
+@app.route('/confirmation/<code>', methods=['DELETE'])
+def delete_confirmation(code: str):
+    # validate existence
+    confirmation = r.get(code)
+    if not confirmation:
+        return jsonify({"errors": ["confirmation not found"]}), 400
+    resp = r.delete(code)
+    # TODO: delete from day key set.
+    # No keys affected
+    if int(resp) == 0:
+        return jsonify({"errors": ["could not delete confirmation"]}), 500
+    return jsonify(confirmation), 200
 
 
 @app.route('/health', methods=['GET'])
