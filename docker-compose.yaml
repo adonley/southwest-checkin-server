@@ -2,8 +2,16 @@ version: "3.7"
 
 services:
   frontend:
-    build: docker/Dockerfile.front
+    build: frontend/
+    ports:
+      - "4200:4200"
   backend:
-    build: docker/Dockerfile.front
+    build: .
+    environment:
+      - REDIS_HOST=redis
+    ports:
+      - "5000:80"
     volumes:
       - "./:/app"
+  redis:
+    image: redis
