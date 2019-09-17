@@ -16,11 +16,11 @@ Options:
 """
 from datetime import datetime
 from datetime import timedelta
-from dateutil.parser import parse
 from docopt import docopt
 from math import trunc
 from pytz import utc
-from southwest import Reservation, openflights
+from confirmation_service.southwest import Reservation
+from confirmation_service.southwest import openflights
 from threading import Thread
 import sys
 import time

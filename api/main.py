@@ -4,9 +4,9 @@ import os
 import json
 import logging
 
-app = Flask(__name__)
 
 r = redis.Redis(host=os.environ.get('REDIS_HOST', 'localhost'), port=6379)
+app = Flask(__name__)
 
 
 @app.route('/confirmation', methods=['POST'])

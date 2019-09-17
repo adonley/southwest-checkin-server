@@ -5,13 +5,21 @@ services:
     build: frontend/
     ports:
       - "4200:4200"
-  backend:
-    build: .
+  api:
+    build: api/
     environment:
       - REDIS_HOST=redis
     ports:
       - "5000:80"
     volumes:
-      - "./:/app"
+      - "./api:/app"
+  confirmation-service:
+    build: confirmation_service/
+    environment:
+      - REDIS_HOST=redis
+    ports:
+      - "5001:5000"
+    volumes:
+      - "./confirmation_service:/app"
   redis:
     image: redis

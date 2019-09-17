@@ -1,5 +1,6 @@
 flask
 redis
+apscheduler
 
 coverage
 datetime

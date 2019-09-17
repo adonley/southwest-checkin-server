@@ -1,11 +1,7 @@
-import json
 import pytest
-import requests
-import southwest
+from confirmation_service import southwest
 import checkin
-from datetime import datetime, timedelta
 from .my_vcr import custom_vcr
-from pytz import timezone
 
 my_vcr = custom_vcr()
 r = southwest.Reservation('XXXXXX', 'John', 'Smith')
