@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CheckinService } from "../checkin.service";
+import {Observable} from "rxjs";
 
 @Component({
   selector: 'app-home',
@@ -15,7 +16,19 @@ export class HomeComponent implements OnInit {
   ngOnInit() {
   }
 
-  public onSubmit() {
+  public deleteCheckin() {
 
+  }
+
+  public getCheckin() {
+    
+  }
+
+  public onSubmitCheckin() {
+    this.checkinService.createCheckin().subscribe((s: Observable<Checkin>) => {
+
+    }, (err: Error) => {
+
+    });
   }
 }
