@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { CheckinService } from "../checkin.service";
-import {Observable} from "rxjs";
 import {FormBuilder, FormGroup, Validators} from "@angular/forms";
 
 @Component({
@@ -12,6 +11,8 @@ export class HomeComponent implements OnInit {
 
   public checkinSendForm: FormGroup;
   public checkinGetForm: FormGroup;
+
+  public checkin: Checkin;
 
   constructor(
     public formBuilder: FormBuilder,
@@ -30,10 +31,12 @@ export class HomeComponent implements OnInit {
     this.checkinGetForm = this.formBuilder.group({
       'confirmation': ['', [Validators.required, Validators.minLength(7), Validators.maxLength(7)]]
     });
+
+    this.checkin = undefined;
   }
 
   public deleteCheckin() {
-    this.checkinService.deleteCheckin().subscribe((c: Observable<Checkin>) => {
+    this.checkinService.deleteCheckin(this.checkinGetForm.controls['confirmation'].value).subscribe((c: Checkin) => {
 
     }, (err: Error) => {
 
@@ -41,16 +44,16 @@ export class HomeComponent implements OnInit {
   }
 
   public getCheckin() {
-    this.checkinService.getCheckin().subscribe((c: Observable<Checkin>) => {
-
+    this.checkinService.getCheckin(this.checkinGetForm.controls['confirmation'].value).subscribe((c: Checkin) => {
+      this.checkin = c;
     }, (err: Error) => {
 
     });
   }
 
   public onSubmitCheckin() {
-    this.checkinService.createCheckin().subscribe((c: Observable<Checkin>) => {
-
+    this.checkinService.createCheckin().subscribe((c: Checkin) => {
+      this.checkin = c;
     }, (err: Error) => {
 
     });
