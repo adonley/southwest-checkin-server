@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import redis
 import os
 import json
@@ -7,6 +8,7 @@ import logging
 
 r = redis.Redis(host=os.environ.get('REDIS_HOST', 'localhost'), port=6379)
 app = Flask(__name__)
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 
 @app.route('/confirmation', methods=['POST'])
@@ -32,7 +34,7 @@ def submit_confirmation():
     # TODO: put in key for date UTC?
     # TODO: put in for confirmation
     # TODO: key expiration?
-    r.set(data.get('confirmation', json.dumps(data)))
+    r.set(data.get('confirmation'), json.dumps(data))
     return "", 201
 
 
