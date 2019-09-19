@@ -14,13 +14,13 @@
         </p>
       </div>
 
-      <form>
+      <form [formGroup]="checkinSendForm" (ngSubmit)="onSubmitCheckin()">
         <!-- Confirmation -->
         <div class="input-group mb-3">
           <div class="input-group-prepend">
             <span class="input-group-text">Confirmation #</span>
           </div>
-          <input class="form-control" placeholder="AXESSF" id="confirmation" name="confirmation" type="text">
+          <input formControlName="confirmation" class="form-control" placeholder="AXESSF" id="confirmation" name="confirmation" type="text" />
         </div>
 
         <!-- First name -->
@@ -28,7 +28,7 @@
           <div class="input-group-prepend">
             <span class="input-group-text">First Name</span>
           </div>
-          <input class="form-control" placeholder="Johnny" id="first-name" name="firstName" type="text">
+          <input formControlName="firstName" class="form-control" placeholder="Johnny" id="first-name" name="firstName" type="text" />
         </div>
 
         <!-- Last name -->
@@ -36,7 +36,7 @@
           <div class="input-group-prepend">
             <span class="input-group-text">Last Name</span>
           </div>
-          <input class="form-control" placeholder="Appleseed" id="last-name" name="confirmation" type="text">
+          <input formControlName="lastName" class="form-control" placeholder="Appleseed" id="last-name" name="confirmation" type="text" />
         </div>
 
         <!-- Email -->
@@ -44,7 +44,7 @@
           <div class="input-group-prepend">
             <span class="input-group-text">Email (optional)</span>
           </div>
-          <input class="form-control" placeholder="aafdasfds@gmail.com" id="email" name="confirmation" type="email">
+          <input formControlName="email" class="form-control" placeholder="aafdasfds@gmail.com" id="email" name="confirmation" type="email" />
         </div>
 
         <!-- Phone -->
@@ -52,10 +52,10 @@
           <div class="input-group-prepend">
             <span class="input-group-text">Phone (optional)</span>
           </div>
-          <input class="form-control" placeholder="7024583345" id="phone" name="phone" type="text">
+          <input formControlName="phone" class="form-control" placeholder="7024583345" id="phone" name="phone" type="text" />
         </div>
 
-        <button type="submit" class="btn btn-primary" onClick="onSubmitCheckin()">
+        <button type="submit" class="btn btn-primary">
           Submit
         </button>
       </form>
@@ -69,12 +69,12 @@
         </p>
       </div>
 
-      <form (ngSubmit)="getCheckin()">
+      <form [formGroup]="checkinGetForm" (ngSubmit)="getCheckin()">
         <div class="input-group mb-3">
           <div class="input-group-prepend">
             <span class="input-group-text">Confirmation #</span>
           </div>
-          <input class="form-control" placeholder="AXESSF" id="check-reservation" name="checkReservation" type="text">
+          <input formControlName="confirmation" class="form-control" placeholder="AXESSF" id="check-reservation" name="checkReservation" type="text" />
 
         </div>
 

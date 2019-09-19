@@ -25,7 +25,7 @@ export class HomeComponent implements OnInit {
       'firstName': ['', [Validators.required, Validators.minLength(2)]],
       'lastName': ['', [Validators.required, Validators.minLength(2)]],
       'phone': ['', [Validators.minLength(10), Validators.maxLength(10)]],
-      'email': ['', [Validators.required]],
+      'email': ['', [Validators.email]],
     });
 
     this.checkinGetForm = this.formBuilder.group({
@@ -52,10 +52,23 @@ export class HomeComponent implements OnInit {
   }
 
   public onSubmitCheckin() {
-    this.checkinService.createCheckin().subscribe((c: Checkin) => {
+    this.checkinService.createCheckin(this.checkinSendForm.value).subscribe((c: Checkin) => {
       this.checkin = c;
     }, (err: Error) => {
 
     });
+  }
+
+  public resetNewCheckinForm() {
+    this.checkinSendForm.reset();
+  }
+
+  public get newCheckinIsValid(): boolean {
+    if (!this.checkinSendForm.valid) {
+      // this.pizzaValidatorsService.validateAllFormFields(this.form);
+      return false;
+    }
+
+    return true;
   }
 }
