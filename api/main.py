@@ -5,10 +5,21 @@ import os
 import json
 import logging
 
+from api.southwest import Reservation
 
 r = redis.Redis(host=os.environ.get('REDIS_HOST', 'localhost'), port=6379)
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
+
+
+class Notifications:
+    @staticmethod
+    def Phone(number):
+        return {'mediaType': 'SMS', 'phoneNumber': number}
+
+    @staticmethod
+    def Email(email_address):
+        return {'mediaType': 'EMAIL', 'emailAddress': email_address}
 
 
 @app.route('/confirmation', methods=['POST'])
@@ -22,10 +33,17 @@ def submit_confirmation():
     if not data.get('lastName'):
         errors.append('provide a last name')
     if not data.get('confirmation'):
-        # TODO: check size
-        errors.append('provide a confirmation')
+        # TODO: maybe check the size
+        errors.append('provide a correct confirmation')
     # TODO: Validate futher?
-    # TODO: validate against API?
+
+    notifications = []
+    if data.get('email') is not None:
+        notifications.append({'mediaType': 'EMAIL', 'emailAddress': data.get('email')})
+    if data.get('phone') is not None:
+        notifications.append({'mediaType': 'SMS', 'phoneNumber': data.get('phone')})
+    reservation = Reservation(data['confirmation'], data['firstName'], data['lastName'], notifications)
+
     # Bail if we have errors
     if len(errors) > 0:
         return jsonify({"errors": errors}), 400
@@ -35,7 +53,7 @@ def submit_confirmation():
     # TODO: put in for confirmation
     # TODO: key expiration?
     r.set(data.get('confirmation'), json.dumps(data))
-    return "", 201
+    return jsonify(data), 201
 
 
 @app.route('/confirmation/<code>', methods=['GET'])
@@ -45,7 +63,7 @@ def get_confirmation(code: str):
     # validate existence
     if not confirmation:
         return jsonify({"errors": ["confirmation not found"]}), 400
-    return jsonify(confirmation), 200
+    return confirmation.decode("utf-8"), 200
 
 
 @app.route('/confirmation/<code>', methods=['DELETE'])
@@ -59,7 +77,7 @@ def delete_confirmation(code: str):
     # No keys affected
     if int(resp) == 0:
         return jsonify({"errors": ["could not delete confirmation"]}), 500
-    return jsonify(confirmation), 200
+    return confirmation.decode("utf-8"), 200
 
 
 @app.route('/health', methods=['GET'])
