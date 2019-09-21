@@ -1,0 +1,25 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: southwest-checkin-frontend
+  labels:
+    app: southwest-checkin
+    tier: frontend
+spec:
+  selector:
+    matchLabels:
+      app: southwest-checkin
+      tier: frontend
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: southwest-checkin
+        tier: frontend
+    spec:
+      containers:
+      - name: southwest-checkin-frontend
+        image: adonley/southwest-checkin-frontend
+        ports:
+        - containerPort: 80
+

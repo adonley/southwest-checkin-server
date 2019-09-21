@@ -1,0 +1,5 @@
+commonLabels:
+  app: southwest-checkin
+resources:
+- frontend/deployment.yaml
+- frontend/service.yaml

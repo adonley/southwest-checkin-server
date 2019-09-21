@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: southwest-checkin-frontend-service
+  labels:
+    app: southwest-checkin
+    tier: frontend
+spec:
+  selector:
+    app: southwest-checkin
+    tier: frontend
+  ports:
+    - port: 8080
+      targetPort: 80
+  type: LoadBalancer
+
