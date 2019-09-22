@@ -1,2 +1,4 @@
 tests/
 Dockerfile
+deployment.yaml
+service.yaml

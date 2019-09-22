@@ -23,11 +23,20 @@ class Reservation(object):
             API_KEY = modded[modded.index(':') + 1:modded.index(',')].strip('"')
         else:
             print("Couldn't get API_KEY")
+            # TODO: Probably should not exit here
             sys.exit(1)
 
         USER_EXPERIENCE_KEY = str(uuid.uuid1()).upper()
+
         # Pulled from proxying the Southwest iOS App
-        return {'Host': 'mobile.southwest.com', 'Content-Type': 'application/json', 'X-API-Key': API_KEY, 'X-User-Experience-Id': USER_EXPERIENCE_KEY, 'Accept': '*/*'}
+        return {
+            'Host': 'mobile.southwest.com',
+            'Content-Type': 'application/json',
+            'X-API-Key': API_KEY,
+            'X-User-Experience-Id': USER_EXPERIENCE_KEY,
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0 Safari/537.36',
+            'Accept': '*/*'
+        }
 
     # You might ask yourself, "Why the hell does this exist?"
     # Basically, there sometimes appears a "hiccup" in Southwest where things

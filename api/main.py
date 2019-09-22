@@ -52,7 +52,12 @@ def submit_confirmation():
         notifications.append({'mediaType': 'SMS', 'phoneNumber': data.get('phone')})
 
     reservation = Reservation(data['confirmation'], data['firstName'], data['lastName'], notifications)
+
+    # Couldn't find the reservation
     body = reservation.lookup_existing_reservation()
+    if body is None:
+        app.logger.warn("body response was none from southwest API")
+        return jsonify({"errors": ["could not get reservation information"]}), 400
 
     # Get our local current time
     now = datetime.datetime.utcnow().replace(tzinfo=utc)
@@ -64,12 +69,20 @@ def submit_confirmation():
         flight_info = {}
         # calculate departure for this leg
         airport = "{}, {}".format(leg['departureAirport']['name'], leg['departureAirport']['state'])
+        destination_airport = "{}, {}".format(leg['arrivalAirport']['name'], leg['arrivalAirport']['state'])
         takeoff = "{}-{}".format(leg['departureDate'], leg['departureTime'])
         flight_info['takeoff'] = takeoff
-        flight_info['airport'] = airport
-        flight_info['checked-in'] = False
+        flight_info['departureAirport'] = airport
+        flight_info['destinationAirport'] = destination_airport
+        flight_info['checkedIn'] = False
+        flight_info['numberOfPeople'] = int(leg['passengerTypeCounts']['adult']) + int(leg['passengerTypeCounts']['senior'])
+        flight_info['boundType'] = leg['boundType']
+        flight_info['travelTime'] = leg['travelTime']
+        flight_info['nextDayArrival'] = leg['isNextDayArrival']
+        flight_info['arrivalTime'] = leg['arrivalTime']
         airport_tz = checkin.timezone_for_airport(leg['departureAirport']['code'])
-        date = airport_tz.localize(datetime.strptime(takeoff, '%Y-%m-%d %H:%M'))
+        local_dt = airport_tz.localize(datetime.datetime.strptime(takeoff, '%Y-%m-%d-%H:%M'))
+        flight_info['utcDepartureTimestamp'] = int((local_dt.astimezone(utc) - datetime.datetime(1970, 1, 1)).total_seconds())
         flight_info_list.append(flight_info)
 
     data['flightInfo'] = flight_info_list
