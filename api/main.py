@@ -39,7 +39,6 @@ def submit_confirmation():
     if not data.get('confirmation'):
         # TODO: maybe check the size
         errors.append('provide a correct confirmation')
-    # TODO: Validate futher?
 
     # Bail if we have errors
     if len(errors) > 0:
@@ -59,7 +58,6 @@ def submit_confirmation():
         app.logger.warn("body response was none from southwest API")
         return jsonify({"errors": ["could not get reservation information"]}), 400
 
-    # Get our local current time
     now = datetime.datetime.utcnow().replace(tzinfo=utc)
     tomorrow = now + datetime.timedelta(days=1)
     flight_info_list = []
@@ -82,15 +80,18 @@ def submit_confirmation():
         flight_info['arrivalTime'] = leg['arrivalTime']
         airport_tz = checkin.timezone_for_airport(leg['departureAirport']['code'])
         local_dt = airport_tz.localize(datetime.datetime.strptime(takeoff, '%Y-%m-%d-%H:%M'))
-        flight_info['utcDepartureTimestamp'] = int((local_dt.astimezone(utc) - datetime.datetime(1970, 1, 1)).total_seconds())
+        flight_info['utcDepartureTimestamp'] = int((local_dt - datetime.datetime(1970, 1, 1, tzinfo=utc)).total_seconds())
+        day = datetime.datetime.fromtimestamp(flight_info['utcDepartureTimestamp']).date()
+        # Crazy converserino here
+        day_timestamp = datetime.datetime.combine(day, datetime.datetime.min.time()).timestamp()
+        flight_info['utcDay'] = int(day_timestamp)
         flight_info_list.append(flight_info)
 
     data['flightInfo'] = flight_info_list
 
-    # r.sadd()
-    # TODO: put in key for date UTC?
-    # TODO: put in for confirmation
-    # TODO: key expiration?
+    # TODO: key expiration? or expiration in other service after time has passed?
+    for flight_info in flight_info_list:
+        r.sadd(flight_info.get('utcDay'), json.dumps(data))
     r.set(data.get('confirmation'), json.dumps(data))
     return jsonify(data), 201
 
@@ -102,7 +103,8 @@ def get_confirmation(code: str):
     # validate existence
     if not confirmation:
         return jsonify({"errors": ["confirmation not found"]}), 400
-    return confirmation.decode("utf-8"), 200
+    confirmation = json.loads(confirmation.decode("utf-8"))
+    return jsonify(confirmation), 200
 
 
 @app.route('/confirmation/<code>', methods=['DELETE'])
@@ -111,17 +113,21 @@ def delete_confirmation(code: str):
     confirmation = r.get(code)
     if not confirmation:
         return jsonify({"errors": ["confirmation not found"]}), 400
+    confirmation = json.loads(confirmation.decode("utf-8"))
+    # Delete from the day sets
+    for flight_info in confirmation['flightInfo']:
+        r.srem(flight_info.get('utcDay'), json.dumps(confirmation))
     resp = r.delete(code)
-    # TODO: delete from day key set.
     # No keys affected
     if int(resp) == 0:
         return jsonify({"errors": ["could not delete confirmation"]}), 500
-    return confirmation.decode("utf-8"), 200
+    return jsonify(confirmation), 200
 
 
 @app.route('/health', methods=['GET'])
 def health():
     test_string = "I'm a goose"
+    # Ping redis to make sure we're connected
     resp = r.echo(test_string)
     app.logger.info(resp)
     if resp != test_string:
@@ -129,6 +135,7 @@ def health():
     return jsonify({"status": "ok"}), 200
 
 
+# If it's being run in Gunicorn
 if __name__ != '__main__':
     gunicorn_logger = logging.getLogger('gunicorn.error')
     app.logger.handlers = gunicorn_logger.handlers
