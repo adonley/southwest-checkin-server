@@ -58,8 +58,6 @@ def submit_confirmation():
         app.logger.warn("body response was none from southwest API")
         return jsonify({"errors": ["could not get reservation information"]}), 400
 
-    now = datetime.datetime.utcnow().replace(tzinfo=utc)
-    tomorrow = now + datetime.timedelta(days=1)
     flight_info_list = []
 
     # find all eligible legs for checkin
