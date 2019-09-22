@@ -4,8 +4,12 @@ import redis
 import os
 import json
 import logging
+import datetime
 
-from api.southwest import Reservation
+from pytz import utc
+
+from api.southwest.southwest import Reservation
+from api.southwest import checkin
 
 r = redis.Redis(host=os.environ.get('REDIS_HOST', 'localhost'), port=6379)
 app = Flask(__name__)
@@ -37,16 +41,38 @@ def submit_confirmation():
         errors.append('provide a correct confirmation')
     # TODO: Validate futher?
 
+    # Bail if we have errors
+    if len(errors) > 0:
+        return jsonify({"errors": errors}), 400
+
     notifications = []
     if data.get('email') is not None:
         notifications.append({'mediaType': 'EMAIL', 'emailAddress': data.get('email')})
     if data.get('phone') is not None:
         notifications.append({'mediaType': 'SMS', 'phoneNumber': data.get('phone')})
-    reservation = Reservation(data['confirmation'], data['firstName'], data['lastName'], notifications)
 
-    # Bail if we have errors
-    if len(errors) > 0:
-        return jsonify({"errors": errors}), 400
+    reservation = Reservation(data['confirmation'], data['firstName'], data['lastName'], notifications)
+    body = reservation.lookup_existing_reservation()
+
+    # Get our local current time
+    now = datetime.datetime.utcnow().replace(tzinfo=utc)
+    tomorrow = now + datetime.timedelta(days=1)
+    flight_info_list = []
+
+    # find all eligible legs for checkin
+    for leg in body['bounds']:
+        flight_info = {}
+        # calculate departure for this leg
+        airport = "{}, {}".format(leg['departureAirport']['name'], leg['departureAirport']['state'])
+        takeoff = "{}-{}".format(leg['departureDate'], leg['departureTime'])
+        flight_info['takeoff'] = takeoff
+        flight_info['airport'] = airport
+        flight_info['checked-in'] = False
+        airport_tz = checkin.timezone_for_airport(leg['departureAirport']['code'])
+        date = airport_tz.localize(datetime.strptime(takeoff, '%Y-%m-%d %H:%M'))
+        flight_info_list.append(flight_info)
+
+    data['flightInfo'] = flight_info_list
 
     # r.sadd()
     # TODO: put in key for date UTC?

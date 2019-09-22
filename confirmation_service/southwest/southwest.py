@@ -8,8 +8,7 @@ CHECKIN_INTERVAL_SECONDS = 0.25
 MAX_ATTEMPTS = 40
 
 
-class Reservation():
-
+class Reservation(object):
     def __init__(self, number, first, last, notifications=[]):
         self.number = number
         self.first = first

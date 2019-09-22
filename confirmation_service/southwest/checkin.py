@@ -16,16 +16,30 @@ Options:
 """
 from datetime import datetime
 from datetime import timedelta
-from docopt import docopt
 from math import trunc
 from pytz import utc
 from confirmation_service.southwest import Reservation
-from confirmation_service.southwest import openflights
 from threading import Thread
-import sys
 import time
+import requests
+import json
+import pytz
 
 CHECKIN_EARLY_SECONDS = 5
+
+
+def timezone_for_airport(airport_code):
+    tzrequest = {
+        'iata': airport_code,
+        'country': 'ALL',
+        'db': 'airports',
+        'iatafilter': 'true',
+        'action': 'SEARCH',
+        'offset': '0'
+    }
+    tzresult = requests.post("https://openflights.org/php/apsearch.php", tzrequest)
+    airport_tz = pytz.timezone(json.loads(tzresult.text)['airports'][0]['tz_id'])
+    return airport_tz
 
 
 def schedule_checkin(flight_time, reservation):
@@ -61,7 +75,7 @@ def auto_checkin(reservation_number, first_name, last_name, notify=[]):
         # calculate departure for this leg
         airport = "{}, {}".format(leg['departureAirport']['name'], leg['departureAirport']['state'])
         takeoff = "{} {}".format(leg['departureDate'], leg['departureTime'])
-        airport_tz = openflights.timezone_for_airport(leg['departureAirport']['code'])
+        airport_tz = timezone_for_airport(leg['departureAirport']['code'])
         date = airport_tz.localize(datetime.strptime(takeoff, '%Y-%m-%d %H:%M'))
         if date > now:
             # found a flight for checkin!

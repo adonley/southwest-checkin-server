@@ -8,8 +8,7 @@ CHECKIN_INTERVAL_SECONDS = 0.25
 MAX_ATTEMPTS = 40
 
 
-class Reservation():
-
+class Reservation(object):
     def __init__(self, number, first, last, notifications=[]):
         self.number = number
         self.first = first
@@ -28,13 +27,7 @@ class Reservation():
 
         USER_EXPERIENCE_KEY = str(uuid.uuid1()).upper()
         # Pulled from proxying the Southwest iOS App
-        return {
-            'Host': 'mobile.southwest.com',
-            'Content-Type': 'application/json',
-            'X-API-Key': API_KEY,
-            'X-User-Experience-Id': USER_EXPERIENCE_KEY,
-            'Accept': '*/*'
-        }
+        return {'Host': 'mobile.southwest.com', 'Content-Type': 'application/json', 'X-API-Key': API_KEY, 'X-User-Experience-Id': USER_EXPERIENCE_KEY, 'Accept': '*/*'}
 
     # You might ask yourself, "Why the hell does this exist?"
     # Basically, there sometimes appears a "hiccup" in Southwest where things
