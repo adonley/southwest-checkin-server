@@ -80,11 +80,11 @@ def submit_confirmation():
         flight_info['arrivalTime'] = leg['arrivalTime']
         airport_tz = checkin.timezone_for_airport(leg['departureAirport']['code'])
         local_dt = airport_tz.localize(datetime.datetime.strptime(takeoff, '%Y-%m-%d-%H:%M'))
-        flight_info['utcDepartureTimestamp'] = int((local_dt - datetime.datetime(1970, 1, 1, tzinfo=utc)).total_seconds())
-        day = datetime.datetime.fromtimestamp(flight_info['utcDepartureTimestamp']).date()
+        utc_dt = local_dt.astimezone(utc)
         # Crazy converserino here
-        day_timestamp = datetime.datetime.combine(day, datetime.datetime.min.time()).timestamp()
-        flight_info['utcDay'] = int(day_timestamp)
+        utc_day = datetime.datetime.combine(utc_dt.date(), datetime.time(0, 0, 0), tzinfo=utc)
+        flight_info['utcDepartureTimestamp'] = int(datetime.datetime.timestamp(utc_dt))
+        flight_info['utcDay'] = int(datetime.datetime.timestamp(utc_day))
         flight_info_list.append(flight_info)
 
     data['flightInfo'] = flight_info_list
