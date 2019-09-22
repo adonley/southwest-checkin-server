@@ -5,6 +5,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import time
 import datetime
 import json
+import threading
 from pytz import utc
 
 
@@ -16,6 +17,7 @@ s = BackgroundScheduler()
 def check_confirmations():
     app.logger.info("checking reservations")
     days_to_check = 60
+    threads = []
     current_day = datetime.datetime.combine(datetime.datetime.utcnow().date(), datetime.time(0, 0, 0), tzinfo=utc)
     # check each of the days
     for d in range(0, days_to_check):
@@ -29,28 +31,27 @@ def check_confirmations():
                     checked_in = info['checkedIn']
                     utc_depart = datetime.datetime.fromtimestamp(info['utcDepartureTimestamp'])
                     now = datetime.datetime.utcnow()
+
                     # within 24 hour and not already checked in
                     if not checked_in and (utc_depart - now) < datetime.timedelta(hours=24):
-                        print("{} within 24 hours".format(confirmation_code))
+                        print("{} within 24 hours, checking in.".format(confirmation_code))
+                        # Checkin with a thread
+                        t = threading.Thread(target=schedule_checkin, args=(date, r))
+                        t.daemon = True
+                        t.start()
+                        threads.append(t)
                     else:
-                        print("{} within {}".format(confirmation_code, (utc_depart - now)))
+                        print("{} within {}.".format(confirmation_code, (utc_depart - now)))
 
-            #     # calculate departure for this leg
-            #         # Checkin with a thread
-            #         t = Thread(target=schedule_checkin, args=(date, r))
-            #         t.daemon = True
-            #         t.start()
-            #         threads.append(t)
-            #
-            # # cleanup threads while handling Ctrl+C
-            # while True:
-            #     if len(threads) == 0:
-            #         break
-            #     for t in threads:
-            #         t.join(5)
-            #         if not t.isAlive():
-            #             threads.remove(t)
-            #             break
+    # cleanup threads while handling Ctrl+C
+    while True:
+        if len(threads) == 0:
+            break
+        for t in threads:
+            t.join(5)
+            if not t.isAlive():
+                threads.remove(t)
+                break
 
     # Get everything a day out and check it
     app.logger.info("done checking reservations")
