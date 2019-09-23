@@ -73,6 +73,7 @@ class Reservation(object):
         return self.load_json_page(self.with_suffix("mobile-air-operations/v1/mobile-air-operations/page/check-in/"))
 
     def checkin(self):
+        # TODO: handle failure gracefully...
         data = self.get_checkin_data()
         info_needed = data['_links']['checkIn']
         url = "{}mobile-air-operations{}".format(BASE_URL, info_needed['href'])

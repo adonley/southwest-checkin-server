@@ -15,8 +15,6 @@ r = redis.Redis(host=os.environ.get('REDIS_HOST', 'localhost'), port=6379)
 app = Flask(__name__)
 s = BackgroundScheduler()
 
-CHECKIN_EARLY_SECONDS = 5
-
 
 def timezone_for_airport(airport_code):
     tzrequest = {
@@ -39,9 +37,11 @@ def checkin(flight_info):
     if flight_info.get('phone') is not None:
         notifications.append({'mediaType': 'SMS', 'phoneNumber': flight_info.get('phone')})
     reservation = Reservation(flight_info['firstName'], flight_info['lastName'], flight_info['confirmation'], notifications)
+    # This will try to checkin multiple times
     data = reservation.checkin()
     for flight in data['flights']:
         for doc in flight['passengers']:
+            # Store that we're done
             # TODO: Get the right flight info for this leg -> check one that is close in time to parse out
             flight_info['results'].append(
                 {
@@ -100,8 +100,8 @@ def check_confirmations():
 def health():
     test_string = "I'm a goose"
     resp = r.echo(test_string)
-
-    if resp != test_string and s.running:
+    # Show down if we're not connected to redis or our scheduler isn't running
+    if resp != test_string or not s.running:
         return jsonify({"status": "down"}), 500
     return jsonify({"status": "ok"}), 200
 
