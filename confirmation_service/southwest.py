@@ -25,9 +25,14 @@ class Reservation(object):
             print("Couldn't get API_KEY")
             sys.exit(1)
 
-        USER_EXPERIENCE_KEY = str(uuid.uuid1()).upper()
         # Pulled from proxying the Southwest iOS App
-        return {'Host': 'mobile.southwest.com', 'Content-Type': 'application/json', 'X-API-Key': API_KEY, 'X-User-Experience-Id': USER_EXPERIENCE_KEY, 'Accept': '*/*'}
+        return {
+            'Host': 'mobile.southwest.com',
+            'Content-Type': 'application/json',
+            'X-API-Key': API_KEY,
+            'X-User-Experience-Id': str(uuid.uuid1()).upper(),
+            'Accept': '*/*'
+        }
 
     # You might ask yourself, "Why the hell does this exist?"
     # Basically, there sometimes appears a "hiccup" in Southwest where things

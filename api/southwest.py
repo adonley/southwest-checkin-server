@@ -81,16 +81,6 @@ class Reservation(object):
     def get_checkin_data(self):
         return self.load_json_page(self.with_suffix("mobile-air-operations/v1/mobile-air-operations/page/check-in/"))
 
-    def checkin(self):
-        data = self.get_checkin_data()
-        info_needed = data['_links']['checkIn']
-        url = "{}mobile-air-operations{}".format(BASE_URL, info_needed['href'])
-        print("Attempting check-in...")
-        confirmation = self.load_json_page(url, info_needed['body'])
-        if len(self.notifications) > 0:
-            self.send_notification(confirmation)
-        return confirmation
-
     def send_notification(self, checkindata):
         if not checkindata['_links']:
             print("Mobile boarding passes not eligible for this reservation")

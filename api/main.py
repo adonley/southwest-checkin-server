@@ -94,7 +94,7 @@ def submit_confirmation():
         utc_dt = local_dt.astimezone(utc)
         # Crazy converserino here
         utc_day = datetime.datetime.combine(utc_dt.date(), datetime.time(0, 0, 0), tzinfo=utc)
-        flight_info['utcDepartureTimestamp'] = int(datetime.datetime.timestamp(utc_dt))
+        flight_info['utcDepartureTimestamp'] = int(datetime.datetime.timestamp(local_dt))
         flight_info['utcDay'] = int(datetime.datetime.timestamp(utc_day))
         flight_info['results'] = []
         flight_info['failed'] = False

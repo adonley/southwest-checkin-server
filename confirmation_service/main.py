@@ -55,7 +55,7 @@ def checkin(flight_info):
 
 def check_confirmations():
     app.logger.info("checking reservations")
-    days_to_check = 60
+    days_to_check = 40
     threads = []
     current_day = datetime.datetime.combine(datetime.datetime.utcnow().date(), datetime.time(0, 0, 0), tzinfo=utc)
     # check each of the days
@@ -69,10 +69,10 @@ def check_confirmations():
                     confirmation_code = confirmation_decoded['confirmation']
                     checked_in = info['checkedIn']
                     failed = info.get('failed', False)
-                    utc_depart = datetime.datetime.fromtimestamp(info['utcDepartureTimestamp'])
+                    utc_depart = datetime.datetime.utcfromtimestamp(info['utcDepartureTimestamp'])
                     now = datetime.datetime.utcnow()
 
-                    if not checked_in and not failed and (utc_depart - now) < datetime.timedelta(hours=24):
+                    if not checked_in and not failed and (utc_depart - now + datetime.timedelta(seconds=2)) < datetime.timedelta(hours=24):
                         print("{} within 24 hours, checking in.".format(confirmation_code))
                         # Checkin with a thread so everyone goes at the same time :D
                         t = threading.Thread(target=checkin, args=(confirmation_decoded, ))
@@ -80,7 +80,7 @@ def check_confirmations():
                         t.start()
                         threads.append(t)
                     else:
-                        print("{} within {}.".format(confirmation_code, (utc_depart - now).days))
+                        print("{} within {} hours.".format(confirmation_code, (utc_depart - now).total_seconds() / (60*60)))
 
     while True:
         if len(threads) == 0:
