@@ -1,3 +1,5 @@
 flask
 redis
 flask-cors
+requests
+pytz

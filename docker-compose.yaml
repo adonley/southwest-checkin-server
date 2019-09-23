@@ -18,7 +18,7 @@ services:
     environment:
       - REDIS_HOST=redis
     ports:
-      - "5001:5000"
+      - "5001:5001"
     volumes:
       - "./confirmation_service:/app"
   redis:

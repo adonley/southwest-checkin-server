@@ -8,7 +8,7 @@ import datetime
 import requests
 from pytz import utc, timezone
 
-from api.southwest import Reservation
+from southwest import Reservation
 
 r = redis.Redis(host=os.environ.get('REDIS_HOST', 'localhost'), port=6379)
 app = Flask(__name__)

@@ -8,8 +8,8 @@ import json
 import requests
 import threading
 from pytz import utc, timezone
-from confirmation_service.southwest import Reservation
 
+from southwest import Reservation
 
 r = redis.Redis(host=os.environ.get('REDIS_HOST', 'localhost'), port=6379)
 app = Flask(__name__)
@@ -43,6 +43,7 @@ def checkin(flight_info):
         for doc in flight['passengers']:
             # Store that we're done
             # TODO: Get the right flight info for this leg -> check one that is close in time to parse out
+            # TODO: Need to update the two sets as well as what's going on in the main.
             flight_info['results'].append(
                 {
                     'name': doc['name'],
@@ -54,33 +55,34 @@ def checkin(flight_info):
 
 
 def check_confirmations():
-    app.logger.info("checking reservations")
+    app.logger.debug("checking reservations")
     days_to_check = 40
     threads = []
     current_day = datetime.datetime.combine(datetime.datetime.utcnow().date(), datetime.time(0, 0, 0), tzinfo=utc)
-    # check each of the days
+    # check all of the days
+    confirmations = set()
     for d in range(0, days_to_check):
         check_timestamp = int(datetime.datetime.timestamp(current_day + datetime.timedelta(days=d)))
-        confirmations = list(r.smembers(check_timestamp))
-        if len(confirmations) > 0:
-            for c in confirmations:
-                confirmation_decoded = json.loads(c.decode("utf-8"))
-                for info in confirmation_decoded['flightInfo']:
-                    confirmation_code = confirmation_decoded['confirmation']
-                    checked_in = info['checkedIn']
-                    failed = info.get('failed', False)
-                    utc_depart = datetime.datetime.utcfromtimestamp(info['utcDepartureTimestamp'])
-                    now = datetime.datetime.utcnow()
+        confirmations.update(r.smembers(check_timestamp))
+    if len(confirmations) > 0:
+        for c in confirmations:
+            confirmation_decoded = json.loads(c.decode("utf-8"))
+            for info in confirmation_decoded['flightInfo']:
+                confirmation_code = confirmation_decoded['confirmation']
+                checked_in = info['checkedIn']
+                failed = info.get('failed', False)
+                utc_depart = datetime.datetime.utcfromtimestamp(info['utcDepartureTimestamp'])
+                now = datetime.datetime.utcnow()
 
-                    if not checked_in and not failed and (utc_depart - now + datetime.timedelta(seconds=2)) < datetime.timedelta(hours=24):
-                        print("{} within 24 hours, checking in.".format(confirmation_code))
-                        # Checkin with a thread so everyone goes at the same time :D
-                        t = threading.Thread(target=checkin, args=(confirmation_decoded, ))
-                        t.daemon = True
-                        t.start()
-                        threads.append(t)
-                    else:
-                        print("{} within {} hours.".format(confirmation_code, (utc_depart - now).total_seconds() / (60*60)))
+                if not checked_in and not failed and (utc_depart - now + datetime.timedelta(seconds=2)) < datetime.timedelta(hours=24):
+                    app.logger.info("{} within 24 hours, checking in.".format(confirmation_code))
+                    # Checkin with a thread so everyone goes at the same time :D
+                    t = threading.Thread(target=checkin, args=(confirmation_decoded, ))
+                    t.daemon = True
+                    t.start()
+                    threads.append(t)
+                else:
+                    app.logger.info("{} within {} hours.".format(confirmation_code, (utc_depart - now).total_seconds() / (60*60)))
 
     while True:
         if len(threads) == 0:
@@ -93,7 +95,7 @@ def check_confirmations():
                 break
 
     # Get everything a day out and check it
-    app.logger.info("done checking reservations")
+    app.logger.debug("done checking reservations")
 
 
 @app.route('/health', methods=['GET'])
