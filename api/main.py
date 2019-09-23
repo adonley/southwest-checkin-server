@@ -5,11 +5,10 @@ import os
 import json
 import logging
 import datetime
+import requests
+from pytz import utc, timezone
 
-from pytz import utc
-
-from api.southwest.southwest import Reservation
-from api.southwest import checkin
+from api.southwest import Reservation
 
 r = redis.Redis(host=os.environ.get('REDIS_HOST', 'localhost'), port=6379)
 app = Flask(__name__)
@@ -24,6 +23,20 @@ class Notifications:
     @staticmethod
     def Email(email_address):
         return {'mediaType': 'EMAIL', 'emailAddress': email_address}
+
+
+def timezone_for_airport(airport_code):
+    tzrequest = {
+        'iata': airport_code,
+        'country': 'ALL',
+        'db': 'airports',
+        'iatafilter': 'true',
+        'action': 'SEARCH',
+        'offset': '0'
+    }
+    tzresult = requests.post("https://openflights.org/php/apsearch.php", tzrequest)
+    airport_tz = timezone(json.loads(tzresult.text)['airports'][0]['tz_id'])
+    return airport_tz
 
 
 @app.route('/confirmation', methods=['POST'])
@@ -76,13 +89,16 @@ def submit_confirmation():
         flight_info['travelTime'] = leg['travelTime']
         flight_info['nextDayArrival'] = leg['isNextDayArrival']
         flight_info['arrivalTime'] = leg['arrivalTime']
-        airport_tz = checkin.timezone_for_airport(leg['departureAirport']['code'])
+        airport_tz = timezone_for_airport(leg['departureAirport']['code'])
         local_dt = airport_tz.localize(datetime.datetime.strptime(takeoff, '%Y-%m-%d-%H:%M'))
         utc_dt = local_dt.astimezone(utc)
         # Crazy converserino here
         utc_day = datetime.datetime.combine(utc_dt.date(), datetime.time(0, 0, 0), tzinfo=utc)
         flight_info['utcDepartureTimestamp'] = int(datetime.datetime.timestamp(utc_dt))
         flight_info['utcDay'] = int(datetime.datetime.timestamp(utc_day))
+        flight_info['results'] = []
+        flight_info['failed'] = False
+
         flight_info_list.append(flight_info)
 
     data['flightInfo'] = flight_info_list

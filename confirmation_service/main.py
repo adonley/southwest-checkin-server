@@ -5,13 +5,52 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import time
 import datetime
 import json
+import requests
 import threading
-from pytz import utc
+from pytz import utc, timezone
+from confirmation_service.southwest import Reservation
 
 
 r = redis.Redis(host=os.environ.get('REDIS_HOST', 'localhost'), port=6379)
 app = Flask(__name__)
 s = BackgroundScheduler()
+
+CHECKIN_EARLY_SECONDS = 5
+
+
+def timezone_for_airport(airport_code):
+    tzrequest = {
+        'iata': airport_code,
+        'country': 'ALL',
+        'db': 'airports',
+        'iatafilter': 'true',
+        'action': 'SEARCH',
+        'offset': '0'
+    }
+    tzresult = requests.post("https://openflights.org/php/apsearch.php", tzrequest)
+    airport_tz = timezone(json.loads(tzresult.text)['airports'][0]['tz_id'])
+    return airport_tz
+
+
+def checkin(flight_info):
+    notifications = []
+    if flight_info.get('email') is not None:
+        notifications.append({'mediaType': 'EMAIL', 'emailAddress': flight_info.get('email')})
+    if flight_info.get('phone') is not None:
+        notifications.append({'mediaType': 'SMS', 'phoneNumber': flight_info.get('phone')})
+    reservation = Reservation(flight_info['firstName'], flight_info['lastName'], flight_info['confirmation'], notifications)
+    data = reservation.checkin()
+    for flight in data['flights']:
+        for doc in flight['passengers']:
+            # TODO: Get the right flight info for this leg -> check one that is close in time to parse out
+            flight_info['results'].append(
+                {
+                    'name': doc['name'],
+                    'boardingGroup': doc['boardingGroup'],
+                    'boardingPosition': doc['boardingPosition']
+                }
+            )
+            print("{} got {}{}!".format(doc['name'], doc['boardingGroup'], doc['boardingPosition']))
 
 
 def check_confirmations():
@@ -29,25 +68,25 @@ def check_confirmations():
                 for info in confirmation_decoded['flightInfo']:
                     confirmation_code = confirmation_decoded['confirmation']
                     checked_in = info['checkedIn']
+                    failed = info.get('failed', False)
                     utc_depart = datetime.datetime.fromtimestamp(info['utcDepartureTimestamp'])
                     now = datetime.datetime.utcnow()
 
-                    # within 24 hour and not already checked in
-                    if not checked_in and (utc_depart - now) < datetime.timedelta(hours=24):
+                    if not checked_in and not failed and (utc_depart - now) < datetime.timedelta(hours=24):
                         print("{} within 24 hours, checking in.".format(confirmation_code))
-                        # Checkin with a thread
-                        t = threading.Thread(target=schedule_checkin, args=(date, r))
+                        # Checkin with a thread so everyone goes at the same time :D
+                        t = threading.Thread(target=checkin, args=(confirmation_decoded, ))
                         t.daemon = True
                         t.start()
                         threads.append(t)
                     else:
-                        print("{} within {}.".format(confirmation_code, (utc_depart - now)))
+                        print("{} within {}.".format(confirmation_code, (utc_depart - now).days))
 
-    # cleanup threads while handling Ctrl+C
     while True:
         if len(threads) == 0:
             break
         for t in threads:
+            # Cycle every 5 seconds to check if thread is still alive
             t.join(5)
             if not t.isAlive():
                 threads.remove(t)
@@ -61,7 +100,8 @@ def check_confirmations():
 def health():
     test_string = "I'm a goose"
     resp = r.echo(test_string)
-    if resp != test_string:
+
+    if resp != test_string and s.running:
         return jsonify({"status": "down"}), 500
     return jsonify({"status": "ok"}), 200
 

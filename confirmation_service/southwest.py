@@ -4,8 +4,8 @@ import sys
 import uuid
 
 BASE_URL = 'https://mobile.southwest.com/api/'
-CHECKIN_INTERVAL_SECONDS = 0.25
-MAX_ATTEMPTS = 40
+CHECKIN_INTERVAL_SECONDS = 1.0
+MAX_ATTEMPTS = 30
 
 
 class Reservation(object):
