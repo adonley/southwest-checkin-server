@@ -11,6 +11,8 @@ services:
       - REDIS_HOST=redis
     ports:
       - "5000:80"
+    links:
+      - redis
     volumes:
       - "./api:/app"
   confirmation-service:
@@ -19,6 +21,8 @@ services:
       - REDIS_HOST=redis
     ports:
       - "5001:5001"
+    links:
+      - redis
     volumes:
       - "./confirmation_service:/app"
   redis:

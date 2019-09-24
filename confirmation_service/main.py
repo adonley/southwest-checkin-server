@@ -14,6 +14,7 @@ from southwest import Reservation
 r = redis.Redis(host=os.environ.get('REDIS_HOST', 'localhost'), port=6379)
 app = Flask(__name__)
 s = BackgroundScheduler()
+app.logger.info("REDIS_HOST={}".format(os.environ.get('REDIS_HOST', 'localhost')))
 
 
 def timezone_for_airport(airport_code):
@@ -30,33 +31,28 @@ def timezone_for_airport(airport_code):
     return airport_tz
 
 
-def checkin(flight_info):
+def checkin(confirmation, flight_info_index):
     notifications = []
-    if flight_info.get('email') is not None:
-        notifications.append({'mediaType': 'EMAIL', 'emailAddress': flight_info.get('email')})
-    if flight_info.get('phone') is not None:
-        notifications.append({'mediaType': 'SMS', 'phoneNumber': flight_info.get('phone')})
-    reservation = Reservation(flight_info['firstName'], flight_info['lastName'], flight_info['confirmation'], notifications)
+    if confirmation.get('email') is not None:
+        notifications.append({'mediaType': 'EMAIL', 'emailAddress': confirmation.get('email')})
+    if confirmation.get('phone') is not None:
+        notifications.append({'mediaType': 'SMS', 'phoneNumber': confirmation.get('phone')})
+    reservation = Reservation(confirmation['firstName'], confirmation['lastName'], confirmation['confirmation'], notifications)
     # This will try to checkin multiple times
     data = reservation.checkin()
+    # TODO: Handle failure
+
     for flight in data['flights']:
         for doc in flight['passengers']:
-            for f in flight_info['flightInfo']:
-                r.srem(f.get('utcDay'), json.dumps(flight_info))
-
-            if not flight_info.get('results'):
-                flight_info['results'] = []
-
-            flight_info['results'].append(
+            confirmation['flightInfo'][flight_info_index]['results'].append(
                 {
                     'name': doc['name'],
                     'boardingGroup': doc['boardingGroup'],
                     'boardingPosition': doc['boardingPosition']
                 }
             )
-            for f in flight_info['flightInfo']:
-                r.sadd(f.get('utcDay'), json.dumps(flight_info))
-            r.set(flight_info.get('confirmation'), json.dumps(flight_info))
+            confirmation['flightInfo'][flight_info_index]['checkedIn'] = True
+            r.set(confirmation.get('confirmation'), json.dumps(confirmation))
             print("{} got {}{}!".format(doc['name'], doc['boardingGroup'], doc['boardingPosition']))
 
 
@@ -67,14 +63,19 @@ def check_confirmations():
     current_day = datetime.datetime.combine(datetime.datetime.utcnow().date(), datetime.time(0, 0, 0), tzinfo=utc)
 
     # check all of the days
-    confirmations = set()
+    confirmation_numbers = set()
     for d in range(0, days_to_check):
         check_timestamp = int(datetime.datetime.timestamp(current_day + datetime.timedelta(days=d)))
-        confirmations.update(r.smembers(check_timestamp))
+        members = r.smembers(check_timestamp)
+        confirmation_numbers.update(members)
+
+    confirmations = [r.get(x) for x in confirmation_numbers]
+    app.logger.debug("found {} reservations in the next {} days".format(len(confirmations), days_to_check))
 
     if len(confirmations) > 0:
         for c in confirmations:
             confirmation_decoded = json.loads(c.decode("utf-8"))
+            index = 0
             for info in confirmation_decoded['flightInfo']:
                 confirmation_code = confirmation_decoded['confirmation']
                 checked_in = info['checkedIn']
@@ -85,12 +86,14 @@ def check_confirmations():
                 if not checked_in and not failed and (utc_depart - now + datetime.timedelta(seconds=2)) < datetime.timedelta(hours=24):
                     app.logger.info("{} within 24 hours, checking in.".format(confirmation_code))
                     # Checkin with a thread so everyone goes at the same time :D
-                    t = threading.Thread(target=checkin, args=(confirmation_decoded, ))
+                    t = threading.Thread(target=checkin, args=(confirmation_decoded, index, ))
                     t.daemon = True
                     t.start()
                     threads.append(t)
                 else:
                     app.logger.info("{} within {} hours.".format(confirmation_code, (utc_depart - now).total_seconds() / (60*60)))
+
+                index += 1
 
     while True:
         if len(threads) == 0:
@@ -111,8 +114,13 @@ def health():
     test_string = "I'm a goose"
     resp = r.echo(test_string)
     # Show down if we're not connected to redis or our scheduler isn't running
-    if resp != test_string or not s.running:
-        return jsonify({"status": "down"}), 500
+    reasons = []
+    if resp != test_string:
+        reasons.append("redis server didn't respond")
+    if not s.running:
+        reasons.append("checkin daemon not running")
+    if len(reasons) > 0:
+        return jsonify({"status": "down", "reasons": reasons}), 500
     return jsonify({"status": "ok"}), 200
 
 
