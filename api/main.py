@@ -102,6 +102,7 @@ def submit_confirmation():
         flight_info_list.append(flight_info)
 
     data['flightInfo'] = flight_info_list
+    data['results'] = []
 
     # TODO: key expiration? or expiration in other service after time has passed?
     for flight_info in flight_info_list:

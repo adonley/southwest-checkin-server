@@ -26,14 +26,12 @@ class Reservation(object):
             # TODO: Probably should not exit here
             sys.exit(1)
 
-        USER_EXPERIENCE_KEY = str(uuid.uuid1()).upper()
-
         # Pulled from proxying the Southwest iOS App
         return {
             'Host': 'mobile.southwest.com',
             'Content-Type': 'application/json',
             'X-API-Key': API_KEY,
-            'X-User-Experience-Id': USER_EXPERIENCE_KEY,
+            'X-User-Experience-Id': str(uuid.uuid1()).upper(),
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0 Safari/537.36',
             'Accept': '*/*'
         }
@@ -55,6 +53,7 @@ class Reservation(object):
                     attempts += 1
                     print(data['message'])
                     if attempts > MAX_ATTEMPTS:
+                        # TODO: Don't die here.
                         sys.exit("Unable to get data, killing self")
                     sleep(CHECKIN_INTERVAL_SECONDS)
                     continue
@@ -80,18 +79,3 @@ class Reservation(object):
 
     def get_checkin_data(self):
         return self.load_json_page(self.with_suffix("mobile-air-operations/v1/mobile-air-operations/page/check-in/"))
-
-    def send_notification(self, checkindata):
-        if not checkindata['_links']:
-            print("Mobile boarding passes not eligible for this reservation")
-            return
-        info_needed = checkindata['_links']['boardingPasses']
-        url = "{}mobile-air-operations{}".format(BASE_URL, info_needed['href'])
-        mbpdata = self.load_json_page(url, info_needed['body'])
-        info_needed = mbpdata['_links']
-        url = "{}mobile-air-operations{}".format(BASE_URL, info_needed['href'])
-        print("Attempting to send boarding pass...")
-        for n in self.notifications:
-            body = info_needed['body'].copy()
-            body.update(n)
-            self.safe_request(url, body)

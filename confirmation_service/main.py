@@ -41,9 +41,12 @@ def checkin(flight_info):
     data = reservation.checkin()
     for flight in data['flights']:
         for doc in flight['passengers']:
-            # Store that we're done
-            # TODO: Get the right flight info for this leg -> check one that is close in time to parse out
-            # TODO: Need to update the two sets as well as what's going on in the main.
+            for f in flight_info['flightInfo']:
+                r.srem(f.get('utcDay'), json.dumps(flight_info))
+
+            if not flight_info.get('results'):
+                flight_info['results'] = []
+
             flight_info['results'].append(
                 {
                     'name': doc['name'],
@@ -51,6 +54,9 @@ def checkin(flight_info):
                     'boardingPosition': doc['boardingPosition']
                 }
             )
+            for f in flight_info['flightInfo']:
+                r.sadd(f.get('utcDay'), json.dumps(flight_info))
+            r.set(flight_info.get('confirmation'), json.dumps(flight_info))
             print("{} got {}{}!".format(doc['name'], doc['boardingGroup'], doc['boardingPosition']))
 
 
@@ -59,11 +65,13 @@ def check_confirmations():
     days_to_check = 40
     threads = []
     current_day = datetime.datetime.combine(datetime.datetime.utcnow().date(), datetime.time(0, 0, 0), tzinfo=utc)
+
     # check all of the days
     confirmations = set()
     for d in range(0, days_to_check):
         check_timestamp = int(datetime.datetime.timestamp(current_day + datetime.timedelta(days=d)))
         confirmations.update(r.smembers(check_timestamp))
+
     if len(confirmations) > 0:
         for c in confirmations:
             confirmation_decoded = json.loads(c.decode("utf-8"))
