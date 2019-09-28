@@ -15,12 +15,17 @@ export class HomeComponent implements OnInit {
   public errorsSend: string[];
   public errorsGet: string[];
 
-  public checkin: Checkin;
+  public sendCheckinResponse: Checkin;
+  public getCheckinResponse: Checkin;
+
+  public JSON: any;
 
   constructor(
     public formBuilder: FormBuilder,
     public checkinService: CheckinService
-  ) { }
+  ) {
+    this.JSON = JSON;
+  }
 
   ngOnInit() {
     this.errorsGet = [];
@@ -38,7 +43,8 @@ export class HomeComponent implements OnInit {
       'confirmation': ['', [Validators.required, Validators.minLength(7), Validators.maxLength(7)]]
     });
 
-    this.checkin = undefined;
+    this.sendCheckinResponse = undefined;
+    this.getCheckinResponse = undefined;
   }
 
   public deleteCheckin() {
@@ -51,7 +57,7 @@ export class HomeComponent implements OnInit {
 
   public getCheckin() {
     this.checkinService.getCheckin(this.checkinGetForm.controls['confirmation'].value).subscribe((c: Checkin) => {
-      this.checkin = c;
+      this.getCheckinResponse = c;
     }, (err: any) => {
       this.errorsGet = err.error.errors;
     });
@@ -59,7 +65,7 @@ export class HomeComponent implements OnInit {
 
   public onSubmitCheckin() {
     this.checkinService.createCheckin(this.checkinSendForm.value).subscribe((c: Checkin) => {
-      this.checkin = c;
+      this.sendCheckinResponse = c;
     }, (err: any) => {
       this.errorsSend = err.error.errors;
     });
