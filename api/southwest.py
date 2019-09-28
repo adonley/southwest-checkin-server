@@ -1,4 +1,3 @@
-from time import sleep
 import requests
 import sys
 import uuid
@@ -40,27 +39,18 @@ class Reservation(object):
     # Basically, there sometimes appears a "hiccup" in Southwest where things
     # aren't exactly available 24-hours before, so we try a few times
     def safe_request(self, url, body=None):
-        try:
-            attempts = 0
-            headers = Reservation.generate_headers()
-            while True:
-                if body is not None:
-                    r = requests.post(url, headers=headers, json=body)
-                else:
-                    r = requests.get(url, headers=headers)
-                data = r.json()
-                if 'httpStatusCode' in data and data['httpStatusCode'] in ['NOT_FOUND', 'BAD_REQUEST', 'FORBIDDEN']:
-                    attempts += 1
-                    print(data['message'])
-                    if attempts > MAX_ATTEMPTS:
-                        # TODO: Don't die here.
-                        sys.exit("Unable to get data, killing self")
-                    sleep(CHECKIN_INTERVAL_SECONDS)
-                    continue
-                return data
-        except ValueError:
-            # Ignore responses with no json data in body
-            pass
+        attempts = 0
+        headers = Reservation.generate_headers()
+        while True:
+            if body is not None:
+                r = requests.post(url, headers=headers, json=body)
+            else:
+                r = requests.get(url, headers=headers)
+            data = r.json()
+            if 'httpStatusCode' in data and data['httpStatusCode'] in ['NOT_FOUND', 'BAD_REQUEST', 'FORBIDDEN']:
+                attempts += 1
+                raise Exception(data['message'])
+            return data
 
     def load_json_page(self, url, body=None):
         data = self.safe_request(url, body)

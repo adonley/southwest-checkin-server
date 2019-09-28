@@ -49,8 +49,7 @@ def submit_confirmation():
         errors.append('provide a first name')
     if not data.get('lastName'):
         errors.append('provide a last name')
-    if not data.get('confirmation'):
-        # TODO: maybe check the size
+    if not data.get('confirmation') or len(data.get('confirmation')) != 6:
         errors.append('provide a correct confirmation')
 
     # Bail if we have errors
@@ -65,8 +64,12 @@ def submit_confirmation():
 
     reservation = Reservation(data['confirmation'], data['firstName'], data['lastName'], notifications)
 
-    # Couldn't find the reservation
-    body = reservation.lookup_existing_reservation()
+    try:
+        body = reservation.lookup_existing_reservation()
+    except Exception as e:
+        # Couldn't find the reservation
+        return jsonify({"errors": [str(e)]}), 400
+
     if body is None:
         app.logger.warn("body response was none from southwest API")
         return jsonify({"errors": ["could not get reservation information"]}), 400
@@ -111,6 +114,8 @@ def submit_confirmation():
 
 @app.route('/confirmation/<code>', methods=['GET'])
 def get_confirmation(code: str):
+    if code is None or len(code) != 6:
+        return jsonify({"errors": ["confirmation must be length six"]}), 400
     app.logger.info("Get request through docker")
     confirmation = r.get(code)
     # validate existence
@@ -122,6 +127,8 @@ def get_confirmation(code: str):
 
 @app.route('/confirmation/<code>', methods=['DELETE'])
 def delete_confirmation(code: str):
+    if code is None or len(code) != 6:
+        return jsonify({"errors": ["confirmation must be length six"]}), 400
     # validate existence
     confirmation = r.get(code)
     if not confirmation:
