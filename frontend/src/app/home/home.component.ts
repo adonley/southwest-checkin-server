@@ -12,6 +12,9 @@ export class HomeComponent implements OnInit {
   public checkinSendForm: FormGroup;
   public checkinGetForm: FormGroup;
 
+  public errorsSend: string[];
+  public errorsGet: string[];
+
   public checkin: Checkin;
 
   constructor(
@@ -20,6 +23,9 @@ export class HomeComponent implements OnInit {
   ) { }
 
   ngOnInit() {
+    this.errorsGet = [];
+    this.errorsSend = [];
+
     this.checkinSendForm = this.formBuilder.group({
       'confirmation': ['', [Validators.required, Validators.minLength(7), Validators.maxLength(7)]],
       'firstName': ['', [Validators.required, Validators.minLength(2)]],
@@ -38,7 +44,7 @@ export class HomeComponent implements OnInit {
   public deleteCheckin() {
     this.checkinService.deleteCheckin(this.checkinGetForm.controls['confirmation'].value).subscribe((c: Checkin) => {
 
-    }, (err: Error) => {
+    }, (err: any) => {
 
     });
   }
@@ -46,29 +52,24 @@ export class HomeComponent implements OnInit {
   public getCheckin() {
     this.checkinService.getCheckin(this.checkinGetForm.controls['confirmation'].value).subscribe((c: Checkin) => {
       this.checkin = c;
-    }, (err: Error) => {
-
+    }, (err: any) => {
+      this.errorsGet = err.error.errors;
     });
   }
 
   public onSubmitCheckin() {
     this.checkinService.createCheckin(this.checkinSendForm.value).subscribe((c: Checkin) => {
       this.checkin = c;
-    }, (err: Error) => {
-
+    }, (err: any) => {
+      this.errorsSend = err.error.errors;
     });
+  }
+
+  public resetGetCheckinForm() {
+    this.checkinGetForm.reset();
   }
 
   public resetNewCheckinForm() {
     this.checkinSendForm.reset();
-  }
-
-  public get newCheckinIsValid(): boolean {
-    if (!this.checkinSendForm.valid) {
-      // this.pizzaValidatorsService.validateAllFormFields(this.form);
-      return false;
-    }
-
-    return true;
   }
 }

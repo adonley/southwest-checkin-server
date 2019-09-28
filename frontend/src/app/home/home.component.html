@@ -14,6 +14,13 @@
         </p>
       </div>
 
+      <div *ngIf="errorsSend != undefined && errorsSend.length > 0" ngClass="error-text">
+        <div *ngFor="let err of errorsSend">
+          <b>{{err}}</b>
+        </div>
+      </div>
+      <br *ngIf="errorsSend != undefined && errorsSend.length > 0" />
+
       <form [formGroup]="checkinSendForm" (ngSubmit)="onSubmitCheckin()">
         <!-- Confirmation -->
         <div class="input-group mb-3">
@@ -68,6 +75,13 @@
           Check the status of a reservation / delete future check-in.
         </p>
       </div>
+
+      <div *ngIf="errorsGet != undefined && errorsGet.length > 0" ngClass="error-text">
+        <div *ngFor="let err of errorsGet">
+          <b>{{err}}</b>
+        </div>
+      </div>
+      <br *ngIf="errorsGet != undefined && errorsGet.length > 0" />
 
       <form [formGroup]="checkinGetForm" (ngSubmit)="getCheckin()">
         <div class="input-group mb-3">
