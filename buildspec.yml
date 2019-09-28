@@ -7,22 +7,23 @@ phases:
       docker: 18
   pre_build:
     commands:
-      - $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
+      - $(aws ecr get-login --region us-west-2 --no-include-email)
       - API_REPOSITORY=070576520712.dkr.ecr.us-west-2.amazonaws.com/confirmation-api
       - SERVICE_REPOSITORY=070576520712.dkr.ecr.us-west-2.amazonaws.com/confirmation-service
   build:
     commands:
       - echo Build started on `date`
       - cd api
-      - docker build -t $API_REPOSITORY:latest .
+      - docker build -t $API_REPOSITORY .
       - cd ../confirmation_service
-      - docker build -t $SERVICE_REPOSITORY:latest .
+      - docker build -t $SERVICE_REPOSITORY .
+      - cd ..
   post_build:
     commands:
       - echo Build completed on `date`
       - echo Pushing the Docker images...
-      - docker push $REPOSITORY_URI:latest
-      - docker push $SERVICE_REPOSITORY:latest
+      - docker push $REPOSITORY_URI
+      - docker push $SERVICE_REPOSITORY
       - echo Writing image definitions file...
       - printf '[{"name":"hello-world","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
 artifacts:
