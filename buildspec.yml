@@ -20,6 +20,7 @@ phases:
       - cd ../confirmation_service
       - docker build -t $SERVICE_REPOSITORY .
       - cd ../frontend
+      - npm install
       - npm run build
       - cd ..
   post_build:
