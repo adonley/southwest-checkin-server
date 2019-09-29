@@ -23,7 +23,7 @@ phases:
       - echo Build completed on `date`
       - aws sts get-caller-identity
       - echo Pushing the Docker images...
-      - docker push $REPOSITORY_URI
+      - docker push $API_REPOSITORY
       - docker push $SERVICE_REPOSITORY
       - echo Writing image definitions file...
       - printf '[{"name":"checkin-api","imageUri":"%s"}, {"name":"checkin-service","imageUri":"%s"}]' $REPOSITORY_URI:latest $SERVICE_REPOSITORY:latest  > imagedefinitions.json
