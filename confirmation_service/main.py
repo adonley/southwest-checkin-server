@@ -115,7 +115,7 @@ def health():
     resp = r.echo(test_string)
     # Show down if we're not connected to redis or our scheduler isn't running
     reasons = []
-    if resp != test_string:
+    if resp.decode("utf-8") != test_string:
         reasons.append("redis server didn't respond")
     if not s.running:
         reasons.append("checkin daemon not running")

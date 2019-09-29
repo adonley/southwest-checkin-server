@@ -149,8 +149,7 @@ def health():
     test_string = "I'm a goose"
     # Ping redis to make sure we're connected
     resp = r.echo(test_string)
-    app.logger.info(resp)
-    if resp != test_string:
+    if resp.decode("utf-8") != test_string:
         return jsonify({"status": "down"}), 500
     return jsonify({"status": "ok"}), 200
 
