@@ -10,7 +10,7 @@ phases:
       - $(aws ecr get-login --region us-west-2 --no-include-email)
       - API_REPOSITORY=070576520712.dkr.ecr.us-west-2.amazonaws.com/confirmation-api
       - SERVICE_REPOSITORY=070576520712.dkr.ecr.us-west-2.amazonaws.com/confirmation-service
-      - CLOUDFRONT_DISTRIBUTION_ID=ELC5E2SMZK2I
+      - CLOUDFRONT_DISTRIBUTION_ID=E1TMCYOMT0EI5K
       - S3_BUCKET=southwest.andrewjdonley.com
   build:
     commands:
