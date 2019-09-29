@@ -62,6 +62,7 @@ def submit_confirmation():
     if data.get('phone') is not None:
         notifications.append({'mediaType': 'SMS', 'phoneNumber': data.get('phone')})
 
+    data['confirmation'] = data['confirmation'].upper()
     reservation = Reservation(data['confirmation'], data['firstName'], data['lastName'], notifications)
 
     try:
@@ -108,7 +109,7 @@ def submit_confirmation():
 
     for flight_info in flight_info_list:
         r.sadd(flight_info.get('utcDay'), data.get('confirmation'))
-    r.set(data.get('confirmation'), json.dumps(data))
+    r.set(data.get('confirmation').upper(), json.dumps(data))
     return jsonify(data), 201
 
 
@@ -117,6 +118,7 @@ def get_confirmation(code: str):
     if code is None or len(code) != 6:
         return jsonify({"errors": ["confirmation must be length six"]}), 400
     app.logger.info("Get request through docker")
+    code = code.upper()
     confirmation = r.get(code)
     # validate existence
     if not confirmation:
@@ -130,6 +132,7 @@ def delete_confirmation(code: str):
     if code is None or len(code) != 6:
         return jsonify({"errors": ["confirmation must be length six"]}), 400
     # validate existence
+    code = code.upper()
     confirmation = r.get(code)
     if not confirmation:
         return jsonify({"errors": ["confirmation not found"]}), 400
