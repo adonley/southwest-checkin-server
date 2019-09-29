@@ -21,6 +21,7 @@ phases:
   post_build:
     commands:
       - echo Build completed on `date`
+      - aws sts get-caller-identity
       - echo Pushing the Docker images...
       - docker push $REPOSITORY_URI
       - docker push $SERVICE_REPOSITORY
