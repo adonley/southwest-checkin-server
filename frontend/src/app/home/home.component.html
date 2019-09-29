@@ -7,73 +7,77 @@
 <div class="container">
   <div class="row">
     <div class="col-md-6 col-sm-10">
-      <div>
-        <h2><b>New Reservation</b></h2>
-        <p>
-          Enter your reservation information to check-in. Phone / email fields are for Southwest to send a confirmation.
-        </p>
+      <div *ngIf="sendCheckinResponse == undefined">
+        <div>
+          <h2><b>New Reservation</b></h2>
+          <p>
+            Enter your reservation information to check-in. Phone / email fields are for Southwest to send a
+            confirmation.
+          </p>
+        </div>
+
+        <div *ngIf="errorsSend != undefined && errorsSend.length > 0" ngClass="error-text">
+          <div *ngFor="let err of errorsSend">
+            <b>{{err}}</b>
+          </div>
+        </div>
+        <br *ngIf="errorsSend != undefined && errorsSend.length > 0"/>
+
+        <form [formGroup]="checkinSendForm" (ngSubmit)="onSubmitCheckin()">
+          <!-- Confirmation -->
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <span class="input-group-text">Confirmation #</span>
+            </div>
+            <input formControlName="confirmation" class="form-control" placeholder="AXESSF" id="confirmation"
+                   name="confirmation" type="text"/>
+          </div>
+
+          <!-- First name -->
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <span class="input-group-text">First Name</span>
+            </div>
+            <input formControlName="firstName" class="form-control" placeholder="Johnny" id="first-name"
+                   name="firstName"
+                   type="text"/>
+          </div>
+
+          <!-- Last name -->
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <span class="input-group-text">Last Name</span>
+            </div>
+            <input formControlName="lastName" class="form-control" placeholder="Appleseed" id="last-name"
+                   name="confirmation" type="text"/>
+          </div>
+
+          <!-- Email -->
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <span class="input-group-text">Email (optional)</span>
+            </div>
+            <input formControlName="email" class="form-control" placeholder="aafdasfds@gmail.com" id="email"
+                   name="confirmation" type="email"/>
+          </div>
+
+          <!-- Phone -->
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <span class="input-group-text">Phone (optional)</span>
+            </div>
+            <input formControlName="phone" class="form-control" placeholder="7024583345" id="phone" name="phone"
+                   type="text"/>
+          </div>
+
+          <button type="submit" class="btn btn-primary">
+            Submit
+          </button>
+        </form>
       </div>
-
-      <div *ngIf="errorsSend != undefined && errorsSend.length > 0" ngClass="error-text">
-        <div *ngFor="let err of errorsSend">
-          <b>{{err}}</b>
-        </div>
-      </div>
-      <br *ngIf="errorsSend != undefined && errorsSend.length > 0"/>
-
-      <form [formGroup]="checkinSendForm" (ngSubmit)="onSubmitCheckin()">
-        <!-- Confirmation -->
-        <div class="input-group mb-3">
-          <div class="input-group-prepend">
-            <span class="input-group-text">Confirmation #</span>
-          </div>
-          <input formControlName="confirmation" class="form-control" placeholder="AXESSF" id="confirmation"
-                 name="confirmation" type="text"/>
-        </div>
-
-        <!-- First name -->
-        <div class="input-group mb-3">
-          <div class="input-group-prepend">
-            <span class="input-group-text">First Name</span>
-          </div>
-          <input formControlName="firstName" class="form-control" placeholder="Johnny" id="first-name" name="firstName"
-                 type="text"/>
-        </div>
-
-        <!-- Last name -->
-        <div class="input-group mb-3">
-          <div class="input-group-prepend">
-            <span class="input-group-text">Last Name</span>
-          </div>
-          <input formControlName="lastName" class="form-control" placeholder="Appleseed" id="last-name"
-                 name="confirmation" type="text"/>
-        </div>
-
-        <!-- Email -->
-        <div class="input-group mb-3">
-          <div class="input-group-prepend">
-            <span class="input-group-text">Email (optional)</span>
-          </div>
-          <input formControlName="email" class="form-control" placeholder="aafdasfds@gmail.com" id="email"
-                 name="confirmation" type="email"/>
-        </div>
-
-        <!-- Phone -->
-        <div class="input-group mb-3">
-          <div class="input-group-prepend">
-            <span class="input-group-text">Phone (optional)</span>
-          </div>
-          <input formControlName="phone" class="form-control" placeholder="7024583345" id="phone" name="phone"
-                 type="text"/>
-        </div>
-
-        <button type="submit" class="btn btn-primary">
-          Submit
-        </button>
-      </form>
 
       <div *ngIf="sendCheckinResponse != undefined">
-        {{ JSON.stringify(sendCheckinResponse, null, "  ") }}
+        <app-checkin [checkin]="sendCheckinResponse"></app-checkin>
       </div>
     </div>
 
@@ -108,7 +112,7 @@
 
 
         <div *ngIf="getCheckinResponse != undefined">
-          {{ JSON.stringify(getCheckinResponse, null, "  ") }}
+          <app-checkin [checkin]="getCheckinResponse"></app-checkin>
         </div>
       </form>
     </div>

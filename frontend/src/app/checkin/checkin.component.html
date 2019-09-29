@@ -1,0 +1,32 @@
+<div *ngIf="checkin != undefined && checkin != null" class="row">
+  <div class="offset-md-2 offset-sm-1 col-md-8 col-sm-10">
+    <div>
+      Passenger: {{ checkin.firstName }} {{ checkin.lastName }}
+    </div>
+    <br />
+    <div *ngFor="let flight of checkin.flightInfo; let i = index">
+      <!-- <div>{{ flight. }}</div> -->
+      <div>Flight #{{ i }}: {{ flight.departureAirport }} -> {{ flight.destinationAirport }}</div>
+      <div>Travel time: {{ flight.travelTime }}</div>
+      <div>Departs: {{ flight.utcDepartureTimestamp * 1000 | date: 'HH:mm MM/dd/yyyy' }}</div>
+      <!-- Deal with failed as well here -->
+      <div *ngFor="let result of flight.results">
+        Passenger: {{ result.name }}
+        <br/>
+        Boarding Group: {{ result.boardingGroup }}
+        <br/>
+        Boarding Position: {{ result.boardingPosition }}
+      </div>
+      <!--  -->
+      <div *ngIf="flight.results.length <= 0 && !flight.checkedIn && !flight.failed">
+        Not checked in yet.
+      </div>
+
+      <div *ngIf="flight.failed">
+        Failed to checkin to flight
+      </div>
+
+      <br />
+    </div>
+  </div>
+</div>

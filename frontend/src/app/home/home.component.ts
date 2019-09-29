@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CheckinService } from "../checkin.service";
 import {FormBuilder, FormGroup, Validators} from "@angular/forms";
+import {CheckinComponent} from "../checkin/checkin.component";
 
 @Component({
   selector: 'app-home',
