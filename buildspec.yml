@@ -29,7 +29,7 @@ phases:
       - docker push $API_REPOSITORY
       - docker push $SERVICE_REPOSITORY
       - aws s3 rm s3://$S3_BUCKET --recursive
-      - aws s3 cp dist/frontend s3://$S3_BUCKET --recursive
+      - aws s3 cp frontend/dist/frontend s3://$S3_BUCKET --recursive
       - aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
       - echo Writing image definitions file...
       - printf '[{"name":"checkin-api","imageUri":"%s"}, {"name":"checkin-service","imageUri":"%s"}]' $REPOSITORY_URI:latest $SERVICE_REPOSITORY:latest  > imagedefinitions.json
