@@ -31,6 +31,7 @@ phases:
       - aws s3 rm s3://$S3_BUCKET --recursive
       - aws s3 cp frontend/dist/frontend s3://$S3_BUCKET --recursive
       - aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
+      - aws ecs update-service --cluster fargate --service southwest-checkin --force-new-deployment --region us-west-2
       - echo Writing image definitions file...
       - printf '[{"name":"checkin-api","imageUri":"%s"}, {"name":"checkin-service","imageUri":"%s"}]' $REPOSITORY_URI:latest $SERVICE_REPOSITORY:latest  > imagedefinitions.json
 artifacts:
