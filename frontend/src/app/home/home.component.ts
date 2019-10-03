@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
-import { CheckinService } from "../checkin.service";
+import {Component, OnInit} from '@angular/core';
+import {CheckinService} from "../checkin.service";
 import {FormBuilder, FormGroup, Validators} from "@angular/forms";
 import {CheckinComponent} from "../checkin/checkin.component";
+import {Angulartics2, EventTrack} from "angulartics2";
 
 @Component({
   selector: 'app-home',
@@ -22,6 +23,7 @@ export class HomeComponent implements OnInit {
   public JSON: any;
 
   constructor(
+    public angulartics2: Angulartics2,
     public formBuilder: FormBuilder,
     public checkinService: CheckinService
   ) {
@@ -57,6 +59,14 @@ export class HomeComponent implements OnInit {
   }
 
   public getCheckin() {
+    this.angulartics2.eventTrack.next({
+      action: 'click',
+      properties: {
+        category: 'getReservationInfo',
+        label: 'reservation',
+        value: this.checkinGetForm.controls['confirmation'].value
+      }
+    });
     this.checkinService.getCheckin(this.checkinGetForm.controls['confirmation'].value).subscribe((c: Checkin) => {
       this.getCheckinResponse = c;
     }, (err: any) => {
@@ -65,6 +75,14 @@ export class HomeComponent implements OnInit {
   }
 
   public onSubmitCheckin() {
+    this.angulartics2.eventTrack.next({
+      action: 'click',
+      properties: {
+        category: 'submitReservationInfo',
+        label: 'reservation',
+        value: this.checkinSendForm.controls['confirmation'].value
+      }
+    });
     this.checkinService.createCheckin(this.checkinSendForm.value).subscribe((c: Checkin) => {
       this.sendCheckinResponse = c;
     }, (err: any) => {
