@@ -7,6 +7,7 @@ import { HomeComponent } from './home/home.component';
 import { HttpClientModule } from "@angular/common/http";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import { CheckinComponent } from './checkin/checkin.component';
+import {Angulartics2Module} from "angulartics2";
 
 @NgModule({
   declarations: [
@@ -19,7 +20,8 @@ import { CheckinComponent } from './checkin/checkin.component';
     ReactiveFormsModule,
     FormsModule,
     AppRoutingModule,
-    HttpClientModule
+    HttpClientModule,
+    Angulartics2Module.forRoot(),
   ],
   providers: [],
   bootstrap: [AppComponent]
