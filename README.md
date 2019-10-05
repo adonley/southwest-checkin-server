@@ -2,14 +2,30 @@ southwest-checkin-server
 ---
 Small web application that checks you into southwest flights at a later date.
 
-![Build Status](https://codebuild.us-west-2.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiMU1oOHRzN1BENjV5MytkNHJNSUhnVm8yWjRmL3p6YnFMQ0hkeWlsdHc5eU5qMTgxVkY4WlhwQ3NtMnltZGJpejA3Vy9Rd2lORnNCOFZPOWR5QjlnQmJZPSIsIml2UGFyYW1ldGVyU3BlYyI6IkN3Q05sQTFCMElFTUtBSVYiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
+Special thanks to the [SouthwestCheckin](https://github.com/pyro2927/SouthwestCheckin). A bunch of the checkin code
+was taken from this repository and modified to fit into a webserver.
 
 ### Requirements
 
+* Python 3.7+
+* pip3
+* npm / node
+
+or
+
+* docker
+* docker-compose
 
 ### Installation
 
-
+```
+cd frontend
+npm install
+cd ../confirmation_service
+sudo -H pip3 install -r requirements.txt
+cd ../api
+sudo -H pip3 install -r requirements.txt
+```
 
 ### Running
 
@@ -19,4 +35,5 @@ Small web application that checks you into southwest flights at a later date.
 
 ### License
 
+GPL v3
 
