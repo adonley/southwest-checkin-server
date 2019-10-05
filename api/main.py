@@ -11,7 +11,9 @@ from pytz import utc, timezone
 from southwest import Reservation
 
 r = redis.Redis(host=os.environ.get('REDIS_HOST', 'localhost'), port=6379)
+recaptcha_secret = os.environ.get('RECAPTCHA_SECRET', None)
 app = Flask(__name__)
+# TODO: Tighten this up for deployment
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 
@@ -23,6 +25,16 @@ class Notifications:
     @staticmethod
     def Email(email_address):
         return {'mediaType': 'EMAIL', 'emailAddress': email_address}
+
+
+def verify_captcha(token: str) -> bool:
+    url = "https://www.google.com/recaptcha/api/siteverify"
+    response = requests.post(url=url, data={'secret': recaptcha_secret, 'response': token})
+    if response.status_code != 200:
+        app.logger.info("Non 200 return code from captcha api")
+        return False
+    body = response.json()
+    return body.get('success') and 0.5 < float(body.get('score'))
 
 
 def timezone_for_airport(airport_code):
@@ -51,6 +63,9 @@ def submit_confirmation():
         errors.append('provide a last name')
     if not data.get('confirmation') or len(data.get('confirmation')) != 6:
         errors.append('provide a correct confirmation')
+    recaptcha = data.get('recaptcha')
+    if recaptcha is None or len(recaptcha) == 0 or not verify_captcha(recaptcha):
+        return jsonify({"errors": ["recaptcha was incorrect"]}), 400
 
     # Bail if we have errors
     if len(errors) > 0:
@@ -113,8 +128,12 @@ def submit_confirmation():
     return jsonify(data), 201
 
 
-@app.route('/confirmation/<code>', methods=['GET'])
+@app.route('/confirmation/<code>', methods=['POST'])
 def get_confirmation(code: str):
+    data = json.loads(request.data)
+    recaptcha = data.get('recaptcha')
+    if recaptcha is None or len(recaptcha) == 0 or not verify_captcha(recaptcha):
+        return jsonify({"errors": ["recaptcha was incorrect"]}), 400
     if code is None or len(code) != 6:
         return jsonify({"errors": ["confirmation must be length six"]}), 400
     app.logger.info("Get request through docker")

@@ -1,7 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {CheckinService} from "../checkin.service";
 import {FormBuilder, FormGroup, Validators} from "@angular/forms";
-import {CheckinComponent} from "../checkin/checkin.component";
 
 declare const gtag: any;
 
@@ -25,7 +24,7 @@ export class HomeComponent implements OnInit {
 
   constructor(
     public formBuilder: FormBuilder,
-    public checkinService: CheckinService
+    public checkinService: CheckinService,
   ) {
     this.JSON = JSON;
   }
@@ -39,11 +38,11 @@ export class HomeComponent implements OnInit {
       'firstName': ['', [Validators.required, Validators.minLength(2)]],
       'lastName': ['', [Validators.required, Validators.minLength(2)]],
       'phone': ['', [Validators.minLength(10), Validators.maxLength(10)]],
-      'email': ['', [Validators.email]],
+      'email': ['', [Validators.email]]
     });
 
     this.checkinGetForm = this.formBuilder.group({
-      'confirmation': ['', [Validators.required, Validators.minLength(7), Validators.maxLength(7)]]
+      'confirmation': ['', [Validators.required, Validators.minLength(7), Validators.maxLength(7)]],
     });
 
     this.sendCheckinResponse = undefined;
@@ -65,10 +64,12 @@ export class HomeComponent implements OnInit {
       'value': this.checkinGetForm.controls['confirmation'].value
     });
 
-    this.checkinService.getCheckin(this.checkinGetForm.controls['confirmation'].value).subscribe((c: Checkin) => {
-      this.getCheckinResponse = c;
-    }, (err: any) => {
-      this.errorsGet = err.error.errors;
+    this.checkinService.captcha('getReservationInfo').subscribe((token) => {
+      this.checkinService.getCheckin(this.checkinGetForm.controls['confirmation'].value, token).subscribe((c: Checkin) => {
+        this.getCheckinResponse = c;
+      }, (err: any) => {
+        this.errorsGet = err.error.errors;
+      });
     });
   }
 
@@ -78,10 +79,12 @@ export class HomeComponent implements OnInit {
       'event_label': 'reservation',
       'value': this.checkinSendForm.controls['confirmation'].value
     });
-    this.checkinService.createCheckin(this.checkinSendForm.value).subscribe((c: Checkin) => {
-      this.sendCheckinResponse = c;
-    }, (err: any) => {
-      this.errorsSend = err.error.errors;
+    this.checkinService.captcha('getReservationInfo').subscribe((token) => {
+      this.checkinService.createCheckin(this.checkinSendForm.value, token).subscribe((c: Checkin) => {
+        this.sendCheckinResponse = c;
+      }, (err: any) => {
+        this.errorsSend = err.error.errors;
+      });
     });
   }
 
