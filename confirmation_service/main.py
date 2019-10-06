@@ -57,7 +57,6 @@ def checkin(confirmation, flight_info_index):
 
 
 def check_confirmations():
-    app.logger.debug("checking reservations")
     days_to_check = 40
     threads = []
     current_day = datetime.datetime.combine(datetime.datetime.utcnow().date(), datetime.time(0, 0, 0), tzinfo=utc)
@@ -70,7 +69,7 @@ def check_confirmations():
         confirmation_numbers.update(members)
 
     confirmations = [r.get(x) for x in confirmation_numbers]
-    app.logger.debug("found {} reservations in the next {} days".format(len(confirmations), days_to_check))
+    # app.logger.debug("found {} reservations in the next {} days".format(len(confirmations), days_to_check))
 
     if len(confirmations) > 0:
         for c in confirmations:
@@ -106,7 +105,7 @@ def check_confirmations():
                 break
 
     # Get everything a day out and check it
-    app.logger.debug("done checking reservations")
+    # app.logger.debug("done checking reservations")
 
 
 @app.route('/health', methods=['GET'])
