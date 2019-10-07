@@ -38,11 +38,18 @@ def checkin(confirmation, flight_info_index):
         notifications.append({'mediaType': 'SMS', 'phoneNumber': confirmation.get('phone')})
 
     reservation = Reservation(confirmation['firstName'], confirmation['lastName'], confirmation['confirmation'], notifications)
-    # This will try to checkin multiple times
 
-    data = reservation.checkin()
-    # confirmation['flightInfo'][flight_info_index]['failed'] = True
-    # TODO: Handle failure, and mark failure
+    # This will try to checkin multiple times
+    data = None
+    try:
+        data = reservation.checkin()
+        failed = False
+    except Exception as e:
+        failed = True
+
+    confirmation['flightInfo'][flight_info_index]['failed'] = failed
+    if failed:
+        return confirmation
 
     for flight in data['flights']:
         for doc in flight['passengers']:

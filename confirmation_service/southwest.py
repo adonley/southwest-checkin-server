@@ -52,8 +52,7 @@ class Reservation(object):
                     # TODO: this would be where the error is printed
                     print(data['message'])
                     if attempts > MAX_ATTEMPTS:
-                        # TODO: return error state instead of killing ourselves
-                        sys.exit("Unable to get data, killing self")
+                        raise Exception("Tried to many times and failed")
                     sleep(CHECKIN_INTERVAL_SECONDS)
                     continue
                 return data
