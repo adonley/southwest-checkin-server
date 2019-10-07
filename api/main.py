@@ -66,6 +66,8 @@ def submit_confirmation():
     recaptcha = data.get('recaptcha')
     if recaptcha is None or len(recaptcha) == 0 or not verify_captcha(recaptcha):
         return jsonify({"errors": ["recaptcha was incorrect"]}), 400
+    # Don't want this to go into the database
+    del data['recaptcha']
 
     # Bail if we have errors
     if len(errors) > 0:

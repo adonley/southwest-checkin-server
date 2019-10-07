@@ -6,7 +6,6 @@ import time
 import datetime
 import json
 import requests
-import threading
 from pytz import utc, timezone
 
 from southwest import Reservation
@@ -37,10 +36,13 @@ def checkin(confirmation, flight_info_index):
         notifications.append({'mediaType': 'EMAIL', 'emailAddress': confirmation.get('email')})
     if confirmation.get('phone') is not None:
         notifications.append({'mediaType': 'SMS', 'phoneNumber': confirmation.get('phone')})
+
     reservation = Reservation(confirmation['firstName'], confirmation['lastName'], confirmation['confirmation'], notifications)
     # This will try to checkin multiple times
+
     data = reservation.checkin()
-    # TODO: Handle failure
+    # confirmation['flightInfo'][flight_info_index]['failed'] = True
+    # TODO: Handle failure, and mark failure
 
     for flight in data['flights']:
         for doc in flight['passengers']:
@@ -53,13 +55,13 @@ def checkin(confirmation, flight_info_index):
             )
             confirmation['flightInfo'][flight_info_index]['checkedIn'] = True
             r.set(confirmation.get('confirmation'), json.dumps(confirmation))
-            print("{} got {}{}!".format(doc['name'], doc['boardingGroup'], doc['boardingPosition']))
+            app.logger.info("{} got {}{}!".format(doc['name'], doc['boardingGroup'], doc['boardingPosition']))
+    return confirmation
 
 
-def check_confirmations():
+def get_close_confirmations():
     days_to_check = 40
-    threads = []
-    current_day = datetime.datetime.combine(datetime.datetime.utcnow().date(), datetime.time(0, 0, 0), tzinfo=utc)
+    current_day = datetime.datetime.combine(datetime.datetime.utcnow().date() - datetime.timedelta(days=1), datetime.time(0, 0, 0), tzinfo=utc)
 
     # check all of the days
     confirmation_numbers = set()
@@ -69,40 +71,30 @@ def check_confirmations():
         confirmation_numbers.update(members)
 
     confirmations = [r.get(x) for x in confirmation_numbers]
-    # app.logger.debug("found {} reservations in the next {} days".format(len(confirmations), days_to_check))
+    confirmations = [json.loads(c.decode("utf-8")) for c in confirmations]
+    return confirmations
 
-    if len(confirmations) > 0:
-        for c in confirmations:
-            confirmation_decoded = json.loads(c.decode("utf-8"))
-            index = 0
-            for info in confirmation_decoded['flightInfo']:
-                confirmation_code = confirmation_decoded['confirmation']
-                checked_in = info['checkedIn']
-                failed = info.get('failed', False)
-                utc_depart = datetime.datetime.utcfromtimestamp(info['utcDepartureTimestamp'])
-                now = datetime.datetime.utcnow()
 
-                if not checked_in and not failed and (utc_depart - now + datetime.timedelta(seconds=2)) < datetime.timedelta(hours=24):
-                    app.logger.info("{} within 24 hours, checking in.".format(confirmation_code))
-                    # Checkin with a thread so everyone goes at the same time :D
-                    t = threading.Thread(target=checkin, args=(confirmation_decoded, index, ))
-                    t.daemon = True
-                    t.start()
-                    threads.append(t)
-                else:
-                    app.logger.info("{} within {} hours.".format(confirmation_code, (utc_depart - now).total_seconds() / (60*60)))
+def check_confirmations():
+    confirmations = get_close_confirmations()
+    if len(confirmations) <= 0:
+        return
 
-                index += 1
+    for c in confirmations:
+        index = 0
+        for info in c['flightInfo']:
+            confirmation_code = c['confirmation']
+            checked_in = info['checkedIn']
+            failed = info.get('failed', False)
+            utc_depart = datetime.datetime.utcfromtimestamp(info['utcDepartureTimestamp'])
+            now = datetime.datetime.utcnow()
 
-    while True:
-        if len(threads) == 0:
-            break
-        for t in threads:
-            # Cycle every 5 seconds to check if thread is still alive
-            t.join(5)
-            if not t.isAlive():
-                threads.remove(t)
-                break
+            if not checked_in and not failed and (utc_depart - now + datetime.timedelta(seconds=2)) < datetime.timedelta(hours=24):
+                app.logger.info("{} within 24 hours, checking in.".format(confirmation_code))
+                # Checkin with a thread so everyone goes at the same time :D
+                checkin(c, index)
+
+            index += 1
 
     # Get everything a day out and check it
     # app.logger.debug("done checking reservations")
@@ -124,7 +116,7 @@ def health():
 
 
 if __name__ == '__main__':
-    s.add_job(check_confirmations, trigger='interval', seconds=20, max_instances=1)
+    s.add_job(check_confirmations, trigger='interval', seconds=10, max_instances=1)
     s.start()
-    time.sleep(2)
+    time.sleep(5)
     app.run(host='0.0.0.0', port=5001)
