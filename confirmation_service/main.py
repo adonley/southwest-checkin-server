@@ -38,7 +38,7 @@ def checkin(confirmation, flight_info_index):
         notifications.append({'mediaType': 'SMS', 'phoneNumber': confirmation.get('phone')})
 
     print("Checking in confirmation: {}".format(confirmation['confirmation']))
-    reservation = Reservation(confirmation['firstName'], confirmation['lastName'], confirmation['confirmation'], notifications)
+    reservation = Reservation(confirmation['confirmation'], confirmation['firstName'], confirmation['lastName'], notifications)
 
     # This will try to checkin multiple times
     data = None

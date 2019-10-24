@@ -49,7 +49,6 @@ class Reservation(object):
                 data = r.json()
                 if 'httpStatusCode' in data and data['httpStatusCode'] in ['NOT_FOUND', 'BAD_REQUEST', 'FORBIDDEN']:
                     attempts += 1
-                    # TODO: this would be where the error is printed
                     print(data['message'])
                     if attempts > MAX_ATTEMPTS:
                         raise Exception("Tried to many times and failed")
