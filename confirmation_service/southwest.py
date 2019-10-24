@@ -47,6 +47,7 @@ class Reservation(object):
                 else:
                     r = requests.get(url, headers=headers)
                 data = r.json()
+                print(data)
                 if 'httpStatusCode' in data and data['httpStatusCode'] in ['NOT_FOUND', 'BAD_REQUEST', 'FORBIDDEN']:
                     attempts += 1
                     print(data['message'])
