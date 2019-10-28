@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import redis
 import os
+import re
 import json
 import logging
 import datetime
@@ -51,7 +52,7 @@ def timezone_for_airport(airport_code):
     return airport_tz
 
 
-@app.route('/confirmation', methods=['POST'])
+@app.route('/confirmation/submit', methods=['POST'])
 def submit_confirmation():
     data = json.loads(request.data)
 
@@ -130,13 +131,31 @@ def submit_confirmation():
     return jsonify(data), 201
 
 
-@app.route('/confirmation/<code>', methods=['POST'])
+def scan_keys(pattern, count=1000):
+    result = []
+    cur, keys = r.scan(cursor=0, match=pattern, count=count)
+    result.extend(keys)
+    while cur != 0:
+        cur, keys = r.scan(cursor=cur, match=pattern, count=count)
+        result.extend(keys)
+    return result
+
+
+@app.route('/confirmation', methods=['POST'], defaults={"code": None})
+@app.route('/confirmation/<string:code>', methods=['POST'])
 def get_confirmation(code: str):
+    if request.data is None:
+        return jsonify({"errors": ["body cannot be null"]}), 400
     data = json.loads(request.data)
     recaptcha = data.get('recaptcha')
     if recaptcha is None or len(recaptcha) == 0 or not verify_captcha(recaptcha):
         return jsonify({"errors": ["recaptcha was incorrect"]}), 400
-    if code is None or len(code) != 6:
+    if code is None:
+        # Get all the keys that start with characters
+        keys = [k.decode("utf-8") for k in r.keys("*") if bool(re.search('^[a-zA-Z]', k.decode("utf-8")))]
+        results = [r.get(k).decode("utf-8") for k in keys]
+        return jsonify(results), 200
+    if len(code) != 6:
         return jsonify({"errors": ["confirmation must be length six"]}), 400
     app.logger.info("Get request through docker")
     code = code.upper()

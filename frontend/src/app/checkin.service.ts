@@ -20,7 +20,7 @@ export class CheckinService {
 
   public createCheckin(checkin: Checkin, token: any) {
     checkin['recaptcha'] = token;
-    return this.httpClient.post<Checkin>(`${this.apiUrl}/confirmation`, checkin);
+    return this.httpClient.post<Checkin>(`${this.apiUrl}/confirmation/submit`, checkin);
   }
 
   public getCheckin(code: string, token: any) {

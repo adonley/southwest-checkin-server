@@ -71,6 +71,7 @@ def checkin(confirmation, flight_info_index):
 
 def get_close_confirmations():
     days_to_check = 40
+    # So we move behind one day and make sure we pick up anything we moved past
     current_day = datetime.datetime.combine(datetime.datetime.utcnow().date() - datetime.timedelta(days=1), datetime.time(0, 0, 0), tzinfo=utc)
 
     # check all of the days
@@ -98,8 +99,8 @@ def check_confirmations():
             failed = info.get('failed', False)
             utc_depart = datetime.datetime.utcfromtimestamp(info['utcDepartureTimestamp'])
             now = datetime.datetime.utcnow()
-
-            if not checked_in and not failed and (utc_depart - now + datetime.timedelta(seconds=2)) < datetime.timedelta(hours=24):
+            # Start checking in anything that is a second past the confirmation time
+            if not checked_in and not failed and (utc_depart - now + datetime.timedelta(seconds=1)) < datetime.timedelta(hours=24):
                 app.logger.info("{} within 24 hours, checking in.".format(confirmation_code))
                 # Checkin with a thread so everyone goes at the same time :D
                 checkin(c, index)
@@ -126,7 +127,7 @@ def health():
 
 
 if __name__ == '__main__':
-    s.add_job(check_confirmations, trigger='interval', seconds=10, max_instances=1)
+    s.add_job(check_confirmations, trigger='interval', seconds=1, max_instances=1)
     s.start()
     time.sleep(5)
     app.run(host='0.0.0.0', port=5001)
