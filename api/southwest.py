@@ -3,8 +3,6 @@ import sys
 import uuid
 
 BASE_URL = 'https://mobile.southwest.com/api/'
-CHECKIN_INTERVAL_SECONDS = 2
-MAX_ATTEMPTS = 1
 
 
 class Reservation(object):
@@ -39,20 +37,15 @@ class Reservation(object):
     # Basically, there sometimes appears a "hiccup" in Southwest where things
     # aren't exactly available 24-hours before, so we try a few times
     def safe_request(self, url, body=None):
-        attempts = 0
         headers = Reservation.generate_headers()
-        while True:
-            if body is not None:
-                r = requests.post(url, headers=headers, json=body)
-            else:
-                r = requests.get(url, headers=headers)
-            data = r.json()
-            if 'httpStatusCode' in data and data['httpStatusCode'] in ['NOT_FOUND', 'BAD_REQUEST', 'FORBIDDEN']:
-                attempts += 1
-                if attempts >= MAX_ATTEMPTS:
-                    raise Exception("Tried to many times and failed")
-                raise Exception(data['message'])
-            return data
+        if body is not None:
+            r = requests.post(url, headers=headers, json=body)
+        else:
+            r = requests.get(url, headers=headers)
+        data = r.json()
+        if 'httpStatusCode' in data and data['httpStatusCode'] in ['NOT_FOUND', 'BAD_REQUEST', 'FORBIDDEN']:
+            raise Exception(data['message'])
+        return data
 
     def load_json_page(self, url, body=None):
         data = self.safe_request(url, body)
@@ -68,6 +61,3 @@ class Reservation(object):
     def lookup_existing_reservation(self):
         # Find our existing record
         return self.load_json_page(self.with_suffix("mobile-air-booking/v1/mobile-air-booking/page/view-reservation/"))
-
-    def get_checkin_data(self):
-        return self.load_json_page(self.with_suffix("mobile-air-operations/v1/mobile-air-operations/page/check-in/"))

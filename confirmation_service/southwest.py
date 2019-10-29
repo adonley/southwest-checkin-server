@@ -6,8 +6,6 @@ import decimal
 import random
 
 BASE_URL = 'https://mobile.southwest.com/api/'
-CHECKIN_INTERVAL_SECONDS = 1.0
-MAX_ATTEMPTS = 15
 
 
 class Reservation(object):
@@ -16,10 +14,11 @@ class Reservation(object):
         self.first = first
         self.last = last
         self.notifications = notifications
+        self.max_attempts = random.randrange(8, 15)
 
     @staticmethod
     def get_interval() -> float:
-        return float("{0:.2f}".format(float(decimal.Decimal(random.randrange(-30, 120)) / 100) + CHECKIN_INTERVAL_SECONDS))
+        return float("{0:.2f}".format(float(decimal.Decimal(random.randrange(-30, 120)) / 100) + 1.0))
 
     @staticmethod
     def generate_headers():
@@ -58,7 +57,7 @@ class Reservation(object):
                 if 'httpStatusCode' in data and data['httpStatusCode'] in ['NOT_FOUND', 'BAD_REQUEST', 'FORBIDDEN']:
                     attempts += 1
                     print(data['message'])
-                    if attempts > MAX_ATTEMPTS:
+                    if attempts > self.max_attempts:
                         raise Exception("Tried to many times and failed")
                     sleep(Reservation.get_interval())
                     continue
