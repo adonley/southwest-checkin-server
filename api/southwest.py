@@ -4,7 +4,7 @@ import uuid
 
 BASE_URL = 'https://mobile.southwest.com/api/'
 CHECKIN_INTERVAL_SECONDS = 2
-MAX_ATTEMPTS = 3
+MAX_ATTEMPTS = 1
 
 
 class Reservation(object):
@@ -49,6 +49,8 @@ class Reservation(object):
             data = r.json()
             if 'httpStatusCode' in data and data['httpStatusCode'] in ['NOT_FOUND', 'BAD_REQUEST', 'FORBIDDEN']:
                 attempts += 1
+                if attempts > MAX_ATTEMPTS:
+                    raise Exception("Tried to many times and failed")
                 raise Exception(data['message'])
             return data
 

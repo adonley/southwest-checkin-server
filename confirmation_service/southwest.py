@@ -7,7 +7,7 @@ import random
 
 BASE_URL = 'https://mobile.southwest.com/api/'
 CHECKIN_INTERVAL_SECONDS = 1.0
-MAX_ATTEMPTS = 20
+MAX_ATTEMPTS = 15
 
 
 class Reservation(object):
