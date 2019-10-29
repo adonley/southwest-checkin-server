@@ -92,6 +92,7 @@ def check_confirmations():
         return
 
     for c in confirmations:
+        # TODO: Validate that the confirmation is still valid...
         index = 0
         for info in c['flightInfo']:
             confirmation_code = c['confirmation']
@@ -99,8 +100,9 @@ def check_confirmations():
             failed = info.get('failed', False)
             utc_depart = datetime.datetime.utcfromtimestamp(info['utcDepartureTimestamp'])
             now = datetime.datetime.utcnow()
-            # Start checking in anything that is a second past the confirmation time
-            if not checked_in and not failed and (utc_depart - now + datetime.timedelta(seconds=1)) < datetime.timedelta(hours=24):
+            # Start checking in anything that is a second past the confirmation time but not after 30 mins
+            time_ok = datetime.timedelta(hours=23, minutes=30) < (utc_depart - now + datetime.timedelta(seconds=1)) < datetime.timedelta(hours=24)
+            if not checked_in and not failed and time_ok:
                 app.logger.info("{} within 24 hours, checking in.".format(confirmation_code))
                 # Checkin with a thread so everyone goes at the same time :D
                 checkin(c, index)

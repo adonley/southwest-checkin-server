@@ -2,10 +2,12 @@ from time import sleep
 import requests
 import sys
 import uuid
+import decimal
+import random
 
 BASE_URL = 'https://mobile.southwest.com/api/'
 CHECKIN_INTERVAL_SECONDS = 1.0
-MAX_ATTEMPTS = 30
+MAX_ATTEMPTS = 20
 
 
 class Reservation(object):
@@ -14,6 +16,10 @@ class Reservation(object):
         self.first = first
         self.last = last
         self.notifications = notifications
+
+    @staticmethod
+    def get_interval() -> float:
+        return float("{0:.2f}".format(float(decimal.Decimal(random.randrange(-30, 120)) / 100) + CHECKIN_INTERVAL_SECONDS))
 
     @staticmethod
     def generate_headers():
@@ -53,7 +59,7 @@ class Reservation(object):
                     print(data['message'])
                     if attempts > MAX_ATTEMPTS:
                         raise Exception("Tried to many times and failed")
-                    sleep(CHECKIN_INTERVAL_SECONDS)
+                    sleep(Reservation.get_interval())
                     continue
                 return data
         except ValueError:
