@@ -35,7 +35,7 @@ def verify_captcha(token: str) -> bool:
         app.logger.info("Non 200 return code from captcha api")
         return False
     body = response.json()
-    return body.get('success') and 0.5 < float(body.get('score'))
+    return body.get('success') and 0.6 < float(body.get('score'))
 
 
 def timezone_for_airport(airport_code):
