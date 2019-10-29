@@ -37,6 +37,7 @@ class Reservation(object):
             'Content-Type': 'application/json',
             'X-API-Key': API_KEY,
             'X-User-Experience-Id': str(uuid.uuid1()).upper(),
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0 Safari/537.36',
             'Accept': '*/*'
         }
 
@@ -90,22 +91,4 @@ class Reservation(object):
         url = "{}mobile-air-operations{}".format(BASE_URL, info_needed['href'])
         print("Attempting check-in...")
         confirmation = self.load_json_page(url, info_needed['body'])
-        if len(self.notifications) > 0:
-            self.send_notification(confirmation)
         return confirmation
-
-    def send_notification(self, checkindata):
-        # TODO: better logging / error handling
-        if not checkindata['_links']:
-            print("Mobile boarding passes not eligible for this reservation")
-            return
-        info_needed = checkindata['_links']['boardingPasses']
-        url = "{}mobile-air-operations{}".format(BASE_URL, info_needed['href'])
-        mbpdata = self.load_json_page(url, info_needed['body'])
-        info_needed = mbpdata['_links']
-        url = "{}mobile-air-operations{}".format(BASE_URL, info_needed['href'])
-        print("Attempting to send boarding pass...")
-        for n in self.notifications:
-            body = info_needed['body'].copy()
-            body.update(n)
-            self.safe_request(url, body)
