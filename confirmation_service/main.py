@@ -31,14 +31,8 @@ def timezone_for_airport(airport_code):
 
 
 def checkin(confirmation, flight_info_index):
-    notifications = []
-    if confirmation.get('email') is not None:
-        notifications.append({'mediaType': 'EMAIL', 'emailAddress': confirmation.get('email')})
-    if confirmation.get('phone') is not None:
-        notifications.append({'mediaType': 'SMS', 'phoneNumber': confirmation.get('phone')})
-
     print("Checking in confirmation: {}".format(confirmation['confirmation']))
-    reservation = Reservation(confirmation['confirmation'], confirmation['firstName'], confirmation['lastName'], notifications)
+    reservation = Reservation(confirmation['confirmation'], confirmation['firstName'], confirmation['lastName'], [])
 
     # This will try to checkin multiple times
     data = None
@@ -54,6 +48,7 @@ def checkin(confirmation, flight_info_index):
         r.set(confirmation.get('confirmation'), json.dumps(confirmation))
         return confirmation
 
+    confirmation['flightInfo'][flight_info_index]['checkedIn'] = True
     for flight in data['flights']:
         for doc in flight['passengers']:
             confirmation['flightInfo'][flight_info_index]['results'].append(
@@ -63,9 +58,8 @@ def checkin(confirmation, flight_info_index):
                     'boardingPosition': doc['boardingPosition']
                 }
             )
-            confirmation['flightInfo'][flight_info_index]['checkedIn'] = True
-            r.set(confirmation.get('confirmation'), json.dumps(confirmation))
             app.logger.info("{} got {}{}!".format(doc['name'], doc['boardingGroup'], doc['boardingPosition']))
+    r.set(confirmation.get('confirmation'), json.dumps(confirmation))
     return confirmation
 
 
@@ -106,11 +100,7 @@ def check_confirmations():
                 app.logger.info("{} within 24 hours, checking in.".format(confirmation_code))
                 # Checkin with a thread so everyone goes at the same time :D
                 checkin(c, index)
-
             index += 1
-
-    # Get everything a day out and check it
-    # app.logger.debug("done checking reservations")
 
 
 @app.route('/health', methods=['GET'])

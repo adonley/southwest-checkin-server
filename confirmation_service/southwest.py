@@ -18,7 +18,7 @@ class Reservation(object):
 
     @staticmethod
     def get_interval() -> float:
-        return float("{0:.2f}".format(float(decimal.Decimal(random.randrange(-30, 120)) / 100) + 1.0))
+        return float("{0:.2f}".format(float(decimal.Decimal(random.randrange(-30, 100)) / 100) + 0.55))
 
     @staticmethod
     def generate_headers():
